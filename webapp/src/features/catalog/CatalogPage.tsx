@@ -131,7 +131,9 @@ function useOwnedUniquesByExpansion(): Map<number, number> {
 
 export function CatalogPage() {
   const [query, setQuery] = useState('')
-  const expansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
+  const allExpansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
+  // Algunos sets (p. ej. demo decks) no tienen cartas de tipo carta suelta: no aportan nada aquí.
+  const expansions = allExpansions.filter((e) => e.cardCount !== 0)
   const ownedUniques = useOwnedUniquesByExpansion()
   const checkNew = useCatalogSync((s) => s.checkForNewExpansions)
   const [newCount, setNewCount] = useState(0)
