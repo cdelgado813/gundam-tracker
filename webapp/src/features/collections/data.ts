@@ -36,6 +36,20 @@ export async function addCardToCollection(collectionId: number, cardId: number):
   await db.customCollectionCards.add({ collectionId, cardId, addedAt: Date.now() })
 }
 
+/** Asigna varias cartas de golpe (selector masivo); ignora las que ya estuvieran asignadas. */
+export async function addCardsToCollection(collectionId: number, cardIds: number[]): Promise<number> {
+  return db.transaction('rw', db.customCollectionCards, async () => {
+    const existing = await db.customCollectionCards.where('collectionId').equals(collectionId).toArray()
+    const already = new Set(existing.map((e) => e.cardId))
+    const now = Date.now()
+    const toAdd = cardIds
+      .filter((id) => !already.has(id))
+      .map((cardId) => ({ collectionId, cardId, addedAt: now }))
+    if (toAdd.length > 0) await db.customCollectionCards.bulkAdd(toAdd)
+    return toAdd.length
+  })
+}
+
 export async function removeCardFromCollection(collectionId: number, cardId: number): Promise<void> {
   await db.customCollectionCards
     .where('[collectionId+cardId]')

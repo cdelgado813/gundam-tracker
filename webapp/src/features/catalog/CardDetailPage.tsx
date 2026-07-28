@@ -191,7 +191,7 @@ export function CardDetailPage() {
     )
 
   return (
-    <div className="mx-auto max-w-3xl p-4">
+    <div className="mx-auto max-w-4xl p-4">
       <Link
         to={`/expansion/${card.expansionId}`}
         className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
@@ -199,12 +199,16 @@ export function CardDetailPage() {
         <ArrowLeft size={14} /> {expansion?.name ?? 'Expansión'}
       </Link>
 
-      <div className="mt-3 flex flex-col gap-5 sm:flex-row">
-        <div className="mx-auto w-56 shrink-0 overflow-hidden rounded-2xl border border-hangar-700 shadow-2xl sm:mx-0">
+      <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-start">
+        <div className="mx-auto w-64 shrink-0 sm:mx-0 sm:w-72 md:w-80 lg:w-96">
           {card.imageUrlShow ? (
-            <img src={card.imageUrlShow} alt={card.name} className="w-full" />
+            <img
+              src={card.imageUrlShow}
+              alt={card.name}
+              className="w-full rounded-2xl shadow-2xl"
+            />
           ) : (
-            <div className="flex aspect-[5/7] items-center justify-center bg-hangar-800 text-hangar-600">
+            <div className="flex aspect-[5/7] items-center justify-center rounded-2xl bg-hangar-800 text-hangar-600">
               <ImageOff size={40} strokeWidth={1.5} />
             </div>
           )}

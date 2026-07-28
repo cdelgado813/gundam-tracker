@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom'
-import { ImageOff, Star } from 'lucide-react'
+import { Check, ImageOff, Star } from 'lucide-react'
 import type { Card } from '@/lib/db'
 
 const rarityColors: Record<string, string> = {
@@ -15,24 +15,25 @@ export function CardTile({
   card,
   ownedCount,
   wishlisted,
-  /** Cuando se pasa true y no hay copias, la carta se atenúa para marcarla como faltante. */
+  /** Cuando se pasa true: atenúa la carta si falta y muestra el contador de copias poseídas. */
   dimIfMissing,
+  /** En modo selección, la tarjeta no navega: alterna su selección. */
+  selectionMode,
+  selected,
+  onToggleSelect,
 }: {
   card: Card
   ownedCount?: number
   wishlisted?: boolean
   dimIfMissing?: boolean
+  selectionMode?: boolean
+  selected?: boolean
+  onToggleSelect?: (cardId: number) => void
 }) {
   const missing = dimIfMissing && !(ownedCount && ownedCount > 0)
-  return (
-    <Link
-      to={`/card/${card.id}`}
-      className={`group relative overflow-hidden rounded-xl border transition [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
-        missing
-          ? 'border-hangar-800 bg-hangar-900/60 opacity-45 grayscale hover:opacity-80'
-          : 'border-hangar-800 bg-hangar-900 hover:border-hangar-600'
-      }`}
-    >
+
+  const inner = (
+    <>
       <div className="aspect-[5/7] w-full overflow-hidden bg-hangar-800">
         {card.imageUrlPreview ? (
           <img
@@ -48,7 +49,7 @@ export function CardTile({
         )}
       </div>
       <div className="p-2">
-        <p className="truncate text-xs font-semibold text-hangar-100">{card.name}</p>
+        <p className="truncate text-left text-xs font-semibold text-hangar-100">{card.name}</p>
         <div className="mt-1 flex items-center justify-between">
           <span className="font-mono text-[10px] text-hangar-300">{card.collectorNumber}</span>
           {card.rarity && (
@@ -60,12 +61,12 @@ export function CardTile({
           )}
         </div>
       </div>
-      {ownedCount != null && ownedCount > 0 && (
+      {dimIfMissing && ownedCount != null && ownedCount > 0 && (
         <span className="absolute left-1.5 top-1.5 rounded-md bg-newtype-400/90 px-1.5 py-0.5 font-display text-[11px] font-bold text-hangar-950 shadow">
           ×{ownedCount}
         </span>
       )}
-      {wishlisted && (
+      {wishlisted && !selectionMode && (
         <span
           className="absolute right-1.5 top-1.5 rounded-full bg-hangar-950/70 p-1 text-haro-400 drop-shadow"
           aria-label="En wishlist"
@@ -73,6 +74,37 @@ export function CardTile({
           <Star size={12} fill="currentColor" />
         </span>
       )}
+      {selectionMode && (
+        <span
+          className={`absolute right-1.5 top-1.5 flex h-5 w-5 items-center justify-center rounded-full border-2 shadow ${
+            selected
+              ? 'border-federation-400 bg-federation-500 text-white'
+              : 'border-hangar-100/70 bg-hangar-950/60'
+          }`}
+        >
+          {selected && <Check size={12} strokeWidth={3} />}
+        </span>
+      )}
+    </>
+  )
+
+  const className = `group relative overflow-hidden rounded-xl border text-left transition [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
+    missing
+      ? 'border-hangar-800 bg-hangar-900/60 opacity-45 grayscale hover:opacity-80'
+      : 'border-hangar-800 bg-hangar-900 hover:border-hangar-600'
+  } ${selectionMode && selected ? 'ring-2 ring-federation-400' : ''}`
+
+  if (selectionMode) {
+    return (
+      <button type="button" onClick={() => onToggleSelect?.(card.id)} className={className}>
+        {inner}
+      </button>
+    )
+  }
+
+  return (
+    <Link to={`/card/${card.id}`} className={className}>
+      {inner}
     </Link>
   )
 }

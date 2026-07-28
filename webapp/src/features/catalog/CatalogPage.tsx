@@ -1,11 +1,12 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Bell, CloudDownload } from 'lucide-react'
+import { Bell, CloudDownload, ListChecks, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useWishlistSet } from './hooks'
 import { RarityFilterChips } from './RarityFilterChips'
+import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
 
@@ -82,7 +83,19 @@ function SyncBanner() {
 }
 
 /** Búsqueda por texto (nombre/número) combinable con un filtro de rarezas (OR). */
-function CardResults({ query, rarities }: { query: string; rarities: Set<string> }) {
+function CardResults({
+  query,
+  rarities,
+  selecting,
+  selectedIds,
+  onToggleSelect,
+}: {
+  query: string
+  rarities: Set<string>
+  selecting: boolean
+  selectedIds: Set<number>
+  onToggleSelect: (cardId: number) => void
+}) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const results =
@@ -129,7 +142,15 @@ function CardResults({ query, rarities }: { query: string; rarities: Set<string>
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
       {results.map((c) => (
-        <CardTile key={c.id} card={c} ownedCount={owned.get(c.id)} wishlisted={wishlist.has(c.id)} />
+        <CardTile
+          key={c.id}
+          card={c}
+          ownedCount={owned.get(c.id)}
+          wishlisted={wishlist.has(c.id)}
+          selectionMode={selecting}
+          selected={selectedIds.has(c.id)}
+          onToggleSelect={onToggleSelect}
+        />
       ))}
     </div>
   )
@@ -153,21 +174,61 @@ function useOwnedUniquesByExpansion(): Map<number, number> {
 export function CatalogPage() {
   const [query, setQuery] = useState('')
   const [selectedRarities, setSelectedRarities] = useState<Set<string>>(new Set())
+  const [selecting, setSelecting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [toast, setToast] = useState<string | null>(null)
   const allExpansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
   // Algunos sets (p. ej. demo decks) no tienen cartas de tipo carta suelta: no aportan nada aquí.
   const expansions = allExpansions.filter((e) => e.cardCount !== 0)
   const ownedUniques = useOwnedUniquesByExpansion()
   const checkNew = useCatalogSync((s) => s.checkForNewExpansions)
   const [newCount, setNewCount] = useState(0)
+  const showingResults = query.trim().length >= 2 || selectedRarities.size > 0
 
   useEffect(() => {
     void checkNew().then(setNewCount)
   }, [checkNew])
 
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(t)
+  }, [toast])
+
+  const toggleSelect = (cardId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(cardId)) next.delete(cardId)
+      else next.add(cardId)
+      return next
+    })
+  }
+
+  const stopSelecting = () => {
+    setSelecting(false)
+    setSelectedIds(new Set())
+  }
+
   return (
-    <div className="mx-auto max-w-5xl p-4">
+    <div className="mx-auto max-w-5xl p-4 pb-24">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">CATÁLOGO</h1>
+        {showingResults &&
+          (selecting ? (
+            <button
+              onClick={stopSelecting}
+              className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+            >
+              <X size={14} /> Cancelar
+            </button>
+          ) : (
+            <button
+              onClick={() => setSelecting(true)}
+              className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+            >
+              <ListChecks size={14} /> Seleccionar
+            </button>
+          ))}
       </header>
 
       <input
@@ -189,8 +250,14 @@ export function CatalogPage() {
 
       <RarityFilterChips selected={selectedRarities} onChange={setSelectedRarities} />
 
-      {query.trim().length >= 2 || selectedRarities.size > 0 ? (
-        <CardResults query={query.trim()} rarities={selectedRarities} />
+      {showingResults ? (
+        <CardResults
+          query={query.trim()}
+          rarities={selectedRarities}
+          selecting={selecting}
+          selectedIds={selectedIds}
+          onToggleSelect={toggleSelect}
+        />
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {expansions.map((e) => {
@@ -211,6 +278,22 @@ export function CatalogPage() {
               </Link>
             )
           })}
+        </div>
+      )}
+
+      {selecting && (
+        <BulkAssignBar
+          selectedIds={selectedIds}
+          onDone={(msg) => {
+            setToast(msg)
+            stopSelecting()
+          }}
+          onCancel={stopSelecting}
+        />
+      )}
+      {toast && (
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-hangar-700 px-4 py-2 text-sm shadow-xl">
+          {toast}
         </div>
       )}
     </div>

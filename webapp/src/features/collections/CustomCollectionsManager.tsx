@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Link } from 'react-router-dom'
 import { Check, Pencil, Trash2 } from 'lucide-react'
 import { CUSTOM_COLLECTION_COLORS, type CustomCollection } from '@/lib/db'
 import { deleteCustomCollection, recolorCustomCollection, renameCustomCollection } from './data'
@@ -41,7 +42,12 @@ function EditableRow({ collection }: { collection: CustomCollection }) {
           className="min-w-0 flex-1 rounded border border-hangar-600 bg-hangar-900 px-2 py-0.5 text-sm focus:outline-none"
         />
       ) : (
-        <span className="min-w-0 flex-1 truncate text-sm text-hangar-100">{collection.name}</span>
+        <Link
+          to={`/collections/${collection.id}`}
+          className="min-w-0 flex-1 truncate text-sm text-hangar-100 hover:text-federation-400 hover:underline"
+        >
+          {collection.name}
+        </Link>
       )}
 
       <button
