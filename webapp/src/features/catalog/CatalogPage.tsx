@@ -98,39 +98,33 @@ function CardResults({
 }) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
-  const results =
+  const MAX_RESULTS = 300
+  const allMatches =
     useLiveQuery(async () => {
-      let merged: Card[]
+      let matches: Card[]
       if (query.length >= 2) {
         const q = query.toLowerCase()
-        const byName = await db.cards.where('searchName').startsWith(q).limit(60).toArray()
-        const byNumber = await db.cards
-          .where('collectorNumber')
-          .startsWithIgnoreCase(query)
-          .limit(30)
+        // Escaneo completo (catálogo ~2000 cartas, trivial): evita que un límite por
+        // "empieza por" oculte coincidencias por subcadena que ordenan más tarde
+        // alfabéticamente (p. ej. "Resource (C++)" detrás de decenas de "Resource").
+        matches = await db.cards
+          .filter((c) => c.searchName.includes(q) || c.collectorNumber.toLowerCase().includes(q))
           .toArray()
-        const contains =
-          byName.length < 20
-            ? (await db.cards.filter((c) => c.searchName.includes(q)).limit(40).toArray()).filter(
-                (c) => !c.searchName.startsWith(q),
-              )
-            : []
-        const seen = new Set<number>()
-        merged = []
-        for (const c of [...byNumber, ...byName, ...contains]) {
-          if (!seen.has(c.id)) {
-            seen.add(c.id)
-            merged.push(c)
-          }
-        }
+        matches.sort((a, b) => {
+          const aStarts = a.searchName.startsWith(q) || a.collectorNumber.toLowerCase().startsWith(q)
+          const bStarts = b.searchName.startsWith(q) || b.collectorNumber.toLowerCase().startsWith(q)
+          if (aStarts !== bStarts) return aStarts ? -1 : 1
+          return a.name.localeCompare(b.name)
+        })
       } else if (rarities.size > 0) {
-        merged = await db.cards.where('rarity').anyOf([...rarities]).sortBy('name')
+        matches = await db.cards.where('rarity').anyOf([...rarities]).sortBy('name')
       } else {
-        merged = []
+        matches = []
       }
 
-      return rarities.size > 0 ? merged.filter((c) => rarities.has(c.rarity)) : merged
+      return rarities.size > 0 ? matches.filter((c) => rarities.has(c.rarity)) : matches
     }, [query, rarities]) ?? []
+  const results = allMatches.slice(0, MAX_RESULTS)
 
   if (results.length === 0)
     return (
@@ -140,19 +134,27 @@ function CardResults({
     )
 
   return (
-    <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
-      {results.map((c) => (
-        <CardTile
-          key={c.id}
-          card={c}
-          ownedCount={owned.get(c.id)}
-          wishlisted={wishlist.has(c.id)}
-          selectionMode={selecting}
-          selected={selectedIds.has(c.id)}
-          onToggleSelect={onToggleSelect}
-        />
-      ))}
-    </div>
+    <>
+      {allMatches.length > MAX_RESULTS && (
+        <p className="mb-2 text-xs text-hangar-300">
+          Mostrando los primeros {MAX_RESULTS} de {allMatches.length} resultados — afina la búsqueda
+          para ver el resto.
+        </p>
+      )}
+      <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+        {results.map((c) => (
+          <CardTile
+            key={c.id}
+            card={c}
+            ownedCount={owned.get(c.id)}
+            wishlisted={wishlist.has(c.id)}
+            selectionMode={selecting}
+            selected={selectedIds.has(c.id)}
+            onToggleSelect={onToggleSelect}
+          />
+        ))}
+      </div>
+    </>
   )
 }
 
