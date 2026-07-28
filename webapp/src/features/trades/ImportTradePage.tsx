@@ -1,0 +1,121 @@
+import { useMemo } from 'react'
+import { Link, useNavigate, useParams } from 'react-router-dom'
+import { useLiveQuery } from 'dexie-react-hooks'
+import { db } from '@/lib/db'
+import { decodeTradeList } from './share'
+import { Button } from '@/ui/Button'
+
+export function ImportTradePage() {
+  const { payload } = useParams()
+  const navigate = useNavigate()
+
+  const decoded = useMemo(() => {
+    try {
+      return { ok: true as const, list: decodeTradeList(payload ?? '') }
+    } catch (err) {
+      return { ok: false as const, error: err instanceof Error ? err.message : 'Enlace inválido' }
+    }
+  }, [payload])
+
+  const resolution = useLiveQuery(async () => {
+    if (!decoded.ok) return null
+    const ids = decoded.list.items.map((i) => i.cardId)
+    const cards = await db.cards.bulkGet(ids)
+    const wishlistIds = new Set((await db.wishlist.toArray()).map((w) => w.cardId))
+    const missing = decoded.list.items.filter((_, i) => cards[i] == null)
+    return { cards, wishlistIds, missingCount: missing.length }
+  }, [decoded])
+
+  if (!decoded.ok) {
+    return (
+      <div className="mx-auto max-w-md p-6 text-center">
+        <span className="text-4xl">⚠️</span>
+        <p className="mt-3 text-sm text-zeon-400">{decoded.error}</p>
+        <Link to="/" className="mt-4 inline-block text-sm text-federation-400 underline">
+          Ir al catálogo
+        </Link>
+      </div>
+    )
+  }
+  if (!resolution) return null
+
+  const { list } = decoded
+  const { cards, wishlistIds, missingCount } = resolution
+  const matches = list.items.filter((i) => wishlistIds.has(i.cardId)).length
+
+  const save = async () => {
+    const now = Date.now()
+    const id = await db.tradeLists.add({
+      name: list.name,
+      authorAlias: list.alias,
+      items: list.items,
+      kind: 'received',
+      createdAt: now,
+      updatedAt: now,
+    })
+    navigate(`/trades/${id}`)
+  }
+
+  return (
+    <div className="mx-auto max-w-3xl p-4">
+      <header className="mb-4 text-center">
+        <span className="text-4xl">📬</span>
+        <h1 className="mt-2 font-display text-xl font-bold text-hangar-100">{list.name}</h1>
+        <p className="mt-1 text-sm text-hangar-300">
+          {list.alias ? `Lista compartida por ${list.alias} · ` : 'Lista compartida · '}
+          {list.items.length} cartas
+        </p>
+        {matches > 0 && (
+          <p className="mt-2 inline-block rounded-lg bg-haro-400/10 px-3 py-1 text-sm text-haro-400">
+            ⭐ ¡{matches} coinciden con tu wishlist!
+          </p>
+        )}
+      </header>
+
+      {missingCount > 0 && (
+        <p className="mb-3 rounded-xl bg-federation-500/10 px-3 py-2 text-sm text-federation-400">
+          {missingCount} carta{missingCount > 1 ? 's' : ''} pertenecen a expansiones que aún no has
+          sincronizado: se muestran por su id. Sincroniza el catálogo para verlas completas.
+        </p>
+      )}
+
+      <ul className="flex flex-col gap-2">
+        {list.items.map((item, i) => {
+          const card = cards[i]
+          const inWishlist = wishlistIds.has(item.cardId)
+          return (
+            <li
+              key={`${item.cardId}-${item.condition ?? ''}`}
+              className={`flex items-center gap-3 rounded-xl border p-2.5 ${
+                inWishlist
+                  ? 'border-haro-400/40 bg-haro-400/5'
+                  : 'border-hangar-800 bg-hangar-900'
+              }`}
+            >
+              <div className="h-16 w-12 shrink-0 overflow-hidden rounded-md bg-hangar-800">
+                {card?.imageUrlPreview && (
+                  <img src={card.imageUrlPreview} alt="" loading="lazy" className="h-full w-full object-cover" />
+                )}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="truncate text-sm font-semibold text-hangar-100">
+                  {inWishlist && '⭐ '}
+                  {card?.name ?? `Blueprint #${item.cardId}`}
+                </p>
+                <p className="text-xs text-hangar-300">
+                  ×{item.quantity}
+                  {item.condition ? ` · ${item.condition}` : ''}
+                  {card ? ` · ${card.collectorNumber}` : ''}
+                </p>
+              </div>
+            </li>
+          )
+        })}
+      </ul>
+
+      <div className="mt-5 flex justify-center">
+        <Button onClick={save}>Guardar como lista recibida</Button>
+      </div>
+    </div>
+  )
+}

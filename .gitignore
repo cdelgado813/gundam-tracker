@@ -1,0 +1,8 @@
+node_modules/
+dist/
+dev-dist/
+*.local
+
+# credenciales: nunca al repo (la colección Postman lleva el JWT embebido)
+jwt.json
+card_trader_postman_collection.json

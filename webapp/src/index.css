@@ -1,0 +1,73 @@
+@import '@fontsource/chakra-petch/600.css';
+@import '@fontsource/chakra-petch/700.css';
+@import '@fontsource-variable/inter';
+@import 'tailwindcss';
+
+/* ---- Design tokens: paleta mecha (D8) ---- */
+@theme {
+  --color-hangar-950: #07090f;
+  --color-hangar-900: #0b0f1a;
+  --color-hangar-800: #131a2b;
+  --color-hangar-700: #1e2740;
+  --color-hangar-600: #2c3a5e;
+  --color-hangar-300: #8b9bc4;
+  --color-hangar-100: #dbe2f2;
+
+  --color-zeon-500: #e0313f; /* rojo Gundam */
+  --color-zeon-400: #f04a58;
+  --color-federation-500: #2563eb; /* azul Federación */
+  --color-federation-400: #4f83f5;
+  --color-newtype-400: #34d399; /* verde éxito/newtype flash */
+  --color-haro-400: #fbbf24; /* ámbar avisos */
+
+  --font-display: 'Chakra Petch', 'Segoe UI', system-ui, sans-serif;
+  --font-sans: 'Inter Variable', 'Segoe UI', system-ui, sans-serif;
+}
+
+:root {
+  color-scheme: dark light;
+}
+
+/* Tema claro: invierte la escala "hangar" manteniendo los acentos (D8) */
+@media (prefers-color-scheme: light) {
+  :root {
+    --color-hangar-950: #f4f6fb;
+    --color-hangar-900: #ffffff;
+    --color-hangar-800: #e8ecf5;
+    --color-hangar-700: #d5dcea;
+    --color-hangar-600: #b6c2da;
+    --color-hangar-300: #5a6a8f;
+    --color-hangar-100: #131a2b;
+  }
+}
+
+/* Transiciones de vista suaves entre rutas */
+@media (prefers-reduced-motion: no-preference) {
+  main > * {
+    animation: fade-slide-in 0.18s ease-out;
+  }
+  @keyframes fade-slide-in {
+    from {
+      opacity: 0;
+      transform: translateY(6px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+html,
+body,
+#root {
+  height: 100%;
+}
+
+body {
+  @apply bg-hangar-950 text-hangar-100 font-sans antialiased;
+}
+
+::selection {
+  @apply bg-zeon-500/40;
+}

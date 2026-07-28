@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "PowerShell(openspec new change \"gundam-tcg-collection-webapp\")",
+      "PowerShell(openspec status --change \"gundam-tcg-collection-webapp\" --json)",
+      "PowerShell(openspec instructions proposal --change \"gundam-tcg-collection-webapp\" --json)",
+      "PowerShell(openspec instructions specs --change \"gundam-tcg-collection-webapp\" --json)",
+      "PowerShell(openspec instructions design --change \"gundam-tcg-collection-webapp\" --json)",
+      "PowerShell(openspec instructions tasks --change \"gundam-tcg-collection-webapp\" --json)",
+      "PowerShell(openspec status --change \"gundam-tcg-collection-webapp\")",
+      "PowerShell(openspec instructions apply --change \"gundam-tcg-collection-webapp\" --json)",
+      "Bash(cd \"/c/Users/cdelg/OneDrive/Documentos/Gundam Tracker\")",
+      "Bash(python -c \"import json;print\\(json.load\\(open\\('jwt.json'\\)\\)['jwt']\\)\")",
+      "Bash(node -e \"console.log\\(require\\('./jwt.json'\\).jwt\\)\")",
+      "Bash(echo \"--- INFO ---\")",
+      "Bash(curl -s -w '\\\\nHTTP %{http_code}\\\\n' -H 'Authorization: Bearer __TRACKED_VAR__' https://api.cardtrader.com/api/v2/info)",
+      "Bash(curl -s -H 'Authorization: Bearer __TRACKED_VAR__' https://api.cardtrader.com/api/v2/expansions -o /tmp/expansions.json)",
+      "Bash(node -e ' *)"
+    ]
+  }
+}
