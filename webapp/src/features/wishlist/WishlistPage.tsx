@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Star } from 'lucide-react'
 import { db } from '@/lib/db'
 import { formatCents } from '@/features/catalog/prices'
 
@@ -67,9 +68,9 @@ export function WishlistPage() {
 
       {data.length === 0 ? (
         <div className="py-16 text-center">
-          <span className="text-4xl">⭐</span>
+          <Star size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
           <p className="mt-3 text-sm text-hangar-300">
-            Tu wishlist está vacía. Marca cartas con ☆ desde el{' '}
+            Tu wishlist está vacía. Marca cartas desde el{' '}
             <Link to="/" className="text-federation-400 underline">
               catálogo
             </Link>

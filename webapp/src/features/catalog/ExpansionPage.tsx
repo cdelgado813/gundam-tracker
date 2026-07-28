@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { ArrowLeft } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useOwnedMap, useWishlistSet } from './hooks'
@@ -25,8 +26,8 @@ export function ExpansionPage() {
   return (
     <div className="mx-auto max-w-5xl p-4">
       <header className="mb-4">
-        <Link to="/" className="text-sm text-hangar-300 hover:text-hangar-100">
-          ← Catálogo
+        <Link to="/" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
+          <ArrowLeft size={14} /> Catálogo
         </Link>
         <h1 className="mt-1 font-display text-xl font-bold text-hangar-100">{expansion?.name}</h1>
         <div className="mt-2 flex items-center gap-3">
@@ -55,6 +56,7 @@ export function ExpansionPage() {
             card={c}
             ownedCount={owned.get(c.id)}
             wishlisted={wishlist.has(c.id)}
+            dimIfMissing
           />
         ))}
       </div>

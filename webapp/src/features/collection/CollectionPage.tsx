@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Package, RotateCw } from 'lucide-react'
 import { db } from '@/lib/db'
 import { formatCents, refreshExpansionPrices } from '@/features/catalog/prices'
 import { Button } from '@/ui/Button'
@@ -113,8 +114,9 @@ export function CollectionPage() {
           </div>
         </div>
         <div className="mt-2 flex items-center gap-3">
-          <Button variant="secondary" onClick={refreshPrices} disabled={refreshing}>
-            {refreshing ? 'Actualizando…' : '↻ Actualizar precios'}
+          <Button variant="secondary" onClick={refreshPrices} disabled={refreshing} className="gap-1.5">
+            <RotateCw size={14} className={refreshing ? 'animate-spin' : undefined} />
+            {refreshing ? 'Actualizando…' : 'Actualizar precios'}
           </Button>
           {refreshMsg && <span className="text-xs text-hangar-300">{refreshMsg}</span>}
         </div>
@@ -122,7 +124,7 @@ export function CollectionPage() {
 
       {stats.length === 0 ? (
         <div className="py-16 text-center">
-          <span className="text-4xl">📦</span>
+          <Package size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
           <p className="mt-3 text-sm text-hangar-300">
             Aún no tienes cartas. Añádelas desde el{' '}
             <Link to="/" className="text-federation-400 underline">

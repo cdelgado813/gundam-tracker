@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom'
+import { ImageOff, Star } from 'lucide-react'
 import type { Card } from '@/lib/db'
 
 const rarityColors: Record<string, string> = {
@@ -14,15 +15,23 @@ export function CardTile({
   card,
   ownedCount,
   wishlisted,
+  /** Cuando se pasa true y no hay copias, la carta se atenúa para marcarla como faltante. */
+  dimIfMissing,
 }: {
   card: Card
   ownedCount?: number
   wishlisted?: boolean
+  dimIfMissing?: boolean
 }) {
+  const missing = dimIfMissing && !(ownedCount && ownedCount > 0)
   return (
     <Link
       to={`/card/${card.id}`}
-      className="group relative overflow-hidden rounded-xl border border-hangar-800 bg-hangar-900 transition hover:border-hangar-600 [content-visibility:auto] [contain-intrinsic-size:auto_240px]"
+      className={`group relative overflow-hidden rounded-xl border transition [content-visibility:auto] [contain-intrinsic-size:auto_240px] ${
+        missing
+          ? 'border-hangar-800 bg-hangar-900/60 opacity-45 grayscale hover:opacity-80'
+          : 'border-hangar-800 bg-hangar-900 hover:border-hangar-600'
+      }`}
     >
       <div className="aspect-[5/7] w-full overflow-hidden bg-hangar-800">
         {card.imageUrlPreview ? (
@@ -33,7 +42,9 @@ export function CardTile({
             className="h-full w-full object-cover transition duration-300 group-hover:scale-105"
           />
         ) : (
-          <div className="flex h-full items-center justify-center text-3xl opacity-30">🃏</div>
+          <div className="flex h-full items-center justify-center text-hangar-600">
+            <ImageOff size={28} strokeWidth={1.5} />
+          </div>
         )}
       </div>
       <div className="p-2">
@@ -55,8 +66,11 @@ export function CardTile({
         </span>
       )}
       {wishlisted && (
-        <span className="absolute right-1.5 top-1.5 text-sm drop-shadow" aria-label="En wishlist">
-          ⭐
+        <span
+          className="absolute right-1.5 top-1.5 rounded-full bg-hangar-950/70 p-1 text-haro-400 drop-shadow"
+          aria-label="En wishlist"
+        >
+          <Star size={12} fill="currentColor" />
         </span>
       )}
     </Link>

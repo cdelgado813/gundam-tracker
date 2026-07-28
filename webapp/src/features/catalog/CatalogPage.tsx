@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Bell, CloudDownload } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useWishlistSet } from './hooks'
@@ -45,7 +46,7 @@ function SyncBanner() {
   if (nothingSynced) {
     return (
       <div className="mb-4 rounded-xl border border-hangar-700 bg-hangar-900 p-6 text-center">
-        <span className="text-4xl">📡</span>
+        <CloudDownload size={32} strokeWidth={1.5} className="mx-auto text-federation-400" />
         <h2 className="mt-2 font-display text-lg font-bold">Descarga el catálogo</h2>
         <p className="mx-auto mt-1 max-w-sm text-sm text-hangar-300">
           Baja todas las expansiones del Gundam Card Game a este dispositivo para navegar y buscar
@@ -158,8 +159,9 @@ export function CatalogPage() {
 
       <SyncBanner />
       {newCount > 0 && (
-        <p className="mb-4 rounded-xl bg-federation-500/10 px-3 py-2 text-sm text-federation-400">
-          ✨ {newCount} expansión{newCount > 1 ? 'es' : ''} nueva{newCount > 1 ? 's' : ''} disponible
+        <p className="mb-4 flex items-center gap-2 rounded-xl bg-federation-500/10 px-3 py-2 text-sm text-federation-400">
+          <Bell size={14} />
+          {newCount} expansión{newCount > 1 ? 'es' : ''} nueva{newCount > 1 ? 's' : ''} disponible
           — usa «Descargar» para bajarla{newCount > 1 ? 's' : ''}.
         </p>
       )}

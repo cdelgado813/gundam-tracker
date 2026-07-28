@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
+import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
 import { OnboardingTour } from '@/features/onboarding/OnboardingTour'
 import { CatalogPage } from '@/features/catalog/CatalogPage'
 import { ExpansionPage } from '@/features/catalog/ExpansionPage'
@@ -10,18 +11,19 @@ import { TradesPage } from '@/features/trades/TradesPage'
 import { TradeListPage } from '@/features/trades/TradeListPage'
 import { ImportTradePage } from '@/features/trades/ImportTradePage'
 import { SettingsPage } from '@/features/backup/SettingsPage'
+import { AboutPage } from '@/features/about/AboutPage'
 import { installAutoBackup } from '@/features/backup/backup'
-
-installAutoBackup()
 import { ReauthModal } from '@/features/onboarding/ReauthModal'
 import { useAuth } from '@/features/onboarding/useAuth'
 
+installAutoBackup()
+
 const tabs = [
-  { to: '/', label: 'Catálogo', icon: '🗂️' },
-  { to: '/collection', label: 'Colección', icon: '📦' },
-  { to: '/wishlist', label: 'Wishlist', icon: '⭐' },
-  { to: '/trades', label: 'Trades', icon: '🔁' },
-  { to: '/settings', label: 'Ajustes', icon: '⚙️' },
+  { to: '/', label: 'Catálogo', Icon: LayoutGrid },
+  { to: '/collection', label: 'Colección', Icon: Package },
+  { to: '/wishlist', label: 'Wishlist', Icon: Star },
+  { to: '/trades', label: 'Trades', Icon: Repeat },
+  { to: '/settings', label: 'Ajustes', Icon: Settings },
 ]
 
 function Shell() {
@@ -42,19 +44,19 @@ function Shell() {
       </main>
       <nav className="border-t border-hangar-800 bg-hangar-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto flex max-w-xl">
-          {tabs.map((t) => (
+          {tabs.map(({ to, label, Icon }) => (
             <NavLink
-              key={t.to}
-              to={t.to}
-              end={t.to === '/'}
+              key={to}
+              to={to}
+              end={to === '/'}
               className={({ isActive }) =>
                 `flex flex-1 flex-col items-center gap-0.5 py-2.5 text-[11px] font-display tracking-wide transition ${
                   isActive ? 'text-zeon-400' : 'text-hangar-300 hover:text-hangar-100'
                 }`
               }
             >
-              <span className="text-lg leading-none">{t.icon}</span>
-              {t.label}
+              <Icon size={20} strokeWidth={1.75} />
+              {label}
             </NavLink>
           ))}
         </div>
@@ -63,19 +65,26 @@ function Shell() {
   )
 }
 
-function App() {
+function Gate() {
   const status = useAuth((s) => s.status)
+  if (status === 'loading') return null
+  return status === 'unauthenticated' ? <OnboardingTour /> : <Shell />
+}
+
+function App() {
   const init = useAuth((s) => s.init)
 
   useEffect(() => {
     void init()
   }, [init])
 
-  if (status === 'loading') return null
-
   return (
     <HashRouter>
-      {status === 'unauthenticated' ? <OnboardingTour /> : <Shell />}
+      <Routes>
+        {/* Accesible sin JWT: cualquiera puede ver de qué trata el proyecto. */}
+        <Route path="/about" element={<AboutPage />} />
+        <Route path="/*" element={<Gate />} />
+      </Routes>
       <ReauthModal />
     </HashRouter>
   )

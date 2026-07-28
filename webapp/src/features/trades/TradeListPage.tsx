@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import QRCode from 'qrcode'
+import { ArrowLeft, Download, Link2, QrCode, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { removeFromTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from './data'
 import { shareUrlFor, encodeTradeList, MAX_SHARE_URL_LENGTH } from './share'
@@ -42,7 +43,7 @@ export function TradeListPage() {
       return
     }
     await navigator.clipboard.writeText(shareUrl)
-    setToast('🔗 Enlace copiado')
+    setToast('Enlace copiado')
   }
 
   const showQr = async () => {
@@ -63,8 +64,8 @@ export function TradeListPage() {
 
   return (
     <div className="mx-auto max-w-3xl p-4">
-      <Link to="/trades" className="text-sm text-hangar-300 hover:text-hangar-100">
-        ← Trades
+      <Link to="/trades" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
+        <ArrowLeft size={14} /> Trades
       </Link>
       <header className="mb-4 mt-1">
         <div className="flex items-center justify-between">
@@ -75,15 +76,21 @@ export function TradeListPage() {
         </div>
         {list.kind === 'own' && (
           <div className="mt-3 flex flex-wrap gap-2">
-            <Button onClick={copyLink}>🔗 Copiar enlace</Button>
-            <Button variant="secondary" onClick={showQr}>
+            <Button onClick={copyLink} className="gap-1.5">
+              <Link2 size={14} />
+              Copiar enlace
+            </Button>
+            <Button variant="secondary" onClick={showQr} className="gap-1.5">
+              <QrCode size={14} />
               QR
             </Button>
-            <Button variant="secondary" onClick={exportFile}>
+            <Button variant="secondary" onClick={exportFile} className="gap-1.5">
+              <Download size={14} />
               Exportar fichero
             </Button>
             <Button
               variant="danger"
+              className="gap-1.5"
               onClick={async () => {
                 if (window.confirm('¿Eliminar esta lista?')) {
                   await db.tradeLists.delete(listId)
@@ -91,6 +98,7 @@ export function TradeListPage() {
                 }
               }}
             >
+              <Trash2 size={14} />
               Eliminar
             </Button>
           </div>
@@ -137,7 +145,7 @@ export function TradeListPage() {
                     className="shrink-0 rounded-lg px-2 py-1 text-hangar-300 hover:bg-hangar-800 hover:text-zeon-400"
                     onClick={() => removeFromTradeList(listId, item.cardId, item.condition)}
                   >
-                    ✕
+                    <X size={16} />
                   </button>
                 )}
               </li>

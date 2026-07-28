@@ -1,6 +1,7 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Inbox, Star, TriangleAlert } from 'lucide-react'
 import { db } from '@/lib/db'
 import { decodeTradeList } from './share'
 import { Button } from '@/ui/Button'
@@ -29,7 +30,7 @@ export function ImportTradePage() {
   if (!decoded.ok) {
     return (
       <div className="mx-auto max-w-md p-6 text-center">
-        <span className="text-4xl">⚠️</span>
+        <TriangleAlert size={32} strokeWidth={1.5} className="mx-auto text-zeon-400" />
         <p className="mt-3 text-sm text-zeon-400">{decoded.error}</p>
         <Link to="/" className="mt-4 inline-block text-sm text-federation-400 underline">
           Ir al catálogo
@@ -59,15 +60,16 @@ export function ImportTradePage() {
   return (
     <div className="mx-auto max-w-3xl p-4">
       <header className="mb-4 text-center">
-        <span className="text-4xl">📬</span>
+        <Inbox size={32} strokeWidth={1.5} className="mx-auto text-federation-400" />
         <h1 className="mt-2 font-display text-xl font-bold text-hangar-100">{list.name}</h1>
         <p className="mt-1 text-sm text-hangar-300">
           {list.alias ? `Lista compartida por ${list.alias} · ` : 'Lista compartida · '}
           {list.items.length} cartas
         </p>
         {matches > 0 && (
-          <p className="mt-2 inline-block rounded-lg bg-haro-400/10 px-3 py-1 text-sm text-haro-400">
-            ⭐ ¡{matches} coinciden con tu wishlist!
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-haro-400/10 px-3 py-1 text-sm text-haro-400">
+            <Star size={13} fill="currentColor" />
+            {matches} coinciden con tu wishlist
           </p>
         )}
       </header>
@@ -98,9 +100,11 @@ export function ImportTradePage() {
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-semibold text-hangar-100">
-                  {inWishlist && '⭐ '}
-                  {card?.name ?? `Blueprint #${item.cardId}`}
+                <p className="flex items-center gap-1 truncate text-sm font-semibold text-hangar-100">
+                  {inWishlist && (
+                    <Star size={12} fill="currentColor" className="shrink-0 text-haro-400" />
+                  )}
+                  <span className="truncate">{card?.name ?? `Blueprint #${item.cardId}`}</span>
                 </p>
                 <p className="text-xs text-hangar-300">
                   ×{item.quantity}

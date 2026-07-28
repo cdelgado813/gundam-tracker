@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { Plus, Repeat } from 'lucide-react'
 import { db } from '@/lib/db'
 import { createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from './data'
 import { Button } from '@/ui/Button'
@@ -17,7 +18,10 @@ export function TradesPage() {
     <div className="mx-auto max-w-3xl p-4">
       <header className="mb-4 flex items-center justify-between">
         <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">TRADES</h1>
-        <Button onClick={() => setCreating(true)}>+ Nueva lista</Button>
+        <Button onClick={() => setCreating(true)} className="gap-1.5">
+          <Plus size={16} />
+          Nueva lista
+        </Button>
       </header>
 
       {creating && (
@@ -44,7 +48,7 @@ export function TradesPage() {
 
       {own.length === 0 && received.length === 0 && !creating && (
         <div className="py-16 text-center">
-          <span className="text-4xl">🔁</span>
+          <Repeat size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
           <p className="mx-auto mt-3 max-w-sm text-sm text-hangar-300">
             Crea listas de hasta {TRADE_LIST_MAX_UNITS} cartas para tradear y compártelas con un
             enlace o QR — sin cuentas ni servidores.

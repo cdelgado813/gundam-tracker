@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { ArrowLeft, Check, ImageOff, Minus, Plus, Repeat, Star } from 'lucide-react'
 import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/lib/db'
 import { addToCollection, setEntryQuantity } from '@/features/collection/data'
 import { toggleWishlist } from '@/features/wishlist/data'
@@ -48,14 +49,15 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
         </select>
         <div className="flex items-center rounded-lg border border-hangar-700 bg-hangar-800">
           <button className="px-2.5 py-1.5" onClick={() => setQty(Math.max(1, qty - 1))}>
-            −
+            <Minus size={14} />
           </button>
           <span className="min-w-6 text-center font-display text-sm">{qty}</span>
           <button className="px-2.5 py-1.5" onClick={() => setQty(qty + 1)}>
-            +
+            <Plus size={14} />
           </button>
         </div>
         <Button
+          className="gap-1.5"
           onClick={async () => {
             await addToCollection(cardId, expansionId, qty, condition, language)
             setAdded(true)
@@ -67,7 +69,8 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
             }
           }}
         >
-          {added ? '✓ Añadida' : 'Añadir'}
+          {added && <Check size={14} />}
+          {added ? 'Añadida' : 'Añadir'}
         </Button>
       </div>
     </div>
@@ -91,14 +94,14 @@ function OwnedEntries({ cardId }: { cardId: number }) {
                 className="rounded bg-hangar-800 px-2 py-0.5 hover:bg-hangar-700"
                 onClick={() => setEntryQuantity(e, e.quantity - 1)}
               >
-                −
+                <Minus size={13} />
               </button>
               <span className="min-w-6 text-center font-display">{e.quantity}</span>
               <button
                 className="rounded bg-hangar-800 px-2 py-0.5 hover:bg-hangar-700"
                 onClick={() => setEntryQuantity(e, e.quantity + 1)}
               >
-                +
+                <Plus size={13} />
               </button>
             </span>
           </li>
@@ -114,14 +117,15 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
 
   const add = async (listId: number) => {
     const added = await addToTradeList(listId, cardId, 1)
-    onDone(added > 0 ? '✓ Añadida a la lista' : 'La lista está llena (máx. 50)')
+    onDone(added > 0 ? 'Añadida a la lista' : 'La lista está llena (máx. 50)')
     setOpen(false)
   }
 
   return (
     <div className="relative">
-      <Button variant="secondary" onClick={() => setOpen(!open)}>
-        🔁 A lista de trade
+      <Button variant="secondary" onClick={() => setOpen(!open)} className="gap-1.5">
+        <Repeat size={14} />
+        A lista de trade
       </Button>
       {open && (
         <div className="absolute bottom-full left-0 z-10 mb-2 w-56 rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
@@ -143,9 +147,10 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
               const id = await createTradeList(name)
               await add(id)
             }}
-            className="w-full rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+            className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
           >
-            + Nueva lista
+            <Plus size={14} />
+            Nueva lista
           </button>
         </div>
       )}
@@ -188,9 +193,9 @@ export function CardDetailPage() {
     <div className="mx-auto max-w-3xl p-4">
       <Link
         to={`/expansion/${card.expansionId}`}
-        className="text-sm text-hangar-300 hover:text-hangar-100"
+        className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
       >
-        ← {expansion?.name ?? 'Expansión'}
+        <ArrowLeft size={14} /> {expansion?.name ?? 'Expansión'}
       </Link>
 
       <div className="mt-3 flex flex-col gap-5 sm:flex-row">
@@ -198,8 +203,8 @@ export function CardDetailPage() {
           {card.imageUrlShow ? (
             <img src={card.imageUrlShow} alt={card.name} className="w-full" />
           ) : (
-            <div className="flex aspect-[5/7] items-center justify-center bg-hangar-800 text-5xl opacity-30">
-              🃏
+            <div className="flex aspect-[5/7] items-center justify-center bg-hangar-800 text-hangar-600">
+              <ImageOff size={40} strokeWidth={1.5} />
             </div>
           )}
         </div>
@@ -229,12 +234,14 @@ export function CardDetailPage() {
           <div className="flex flex-wrap gap-2">
             <Button
               variant="secondary"
+              className="gap-1.5"
               onClick={async () => {
                 const on = await toggleWishlist(cardId, card.expansionId)
-                setToast(on ? '⭐ Añadida a wishlist' : 'Quitada de wishlist')
+                setToast(on ? 'Añadida a wishlist' : 'Quitada de wishlist')
               }}
             >
-              {wishlisted ? '⭐ En wishlist' : '☆ Wishlist'}
+              <Star size={14} fill={wishlisted ? 'currentColor' : 'none'} />
+              {wishlisted ? 'En wishlist' : 'Wishlist'}
             </Button>
             <TradeListPicker cardId={cardId} onDone={setToast} />
           </div>

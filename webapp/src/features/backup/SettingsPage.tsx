@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
+import { CodeXml, Folder, RotateCw, Upload, Download as DownloadIcon } from 'lucide-react'
 import { db } from '@/lib/db'
 import { useAuth } from '@/features/onboarding/useAuth'
 import { JwtForm } from '@/features/onboarding/JwtForm'
@@ -70,7 +72,7 @@ export function SettingsPage() {
     if (!pendingImport) return
     await restoreBackup(pendingImport, mode)
     setPendingImport(null)
-    setMsg('✓ Datos restaurados')
+    setMsg('Datos restaurados')
   }
 
   return (
@@ -99,11 +101,12 @@ export function SettingsPage() {
         </p>
         <Button
           variant="secondary"
-          className="mt-3"
+          className="mt-3 gap-1.5"
           disabled={sync.running}
           onClick={() => sync.run(true)}
         >
-          {sync.running ? `Sincronizando ${sync.done}/${sync.total}…` : '↻ Re-sincronizar todo'}
+          <RotateCw size={14} className={sync.running ? 'animate-spin' : undefined} />
+          {sync.running ? `Sincronizando ${sync.done}/${sync.total}…` : 'Re-sincronizar todo'}
         </Button>
       </Section>
 
@@ -116,14 +119,16 @@ export function SettingsPage() {
           <div className="mt-3 flex items-center gap-3">
             <Button
               variant="secondary"
+              className="gap-1.5"
               onClick={async () => {
                 if (await chooseBackupFolder()) {
                   setFolderName(await getBackupFolderName())
-                  setMsg('✓ Carpeta configurada')
+                  setMsg('Carpeta configurada')
                 }
               }}
             >
-              📁 {folderName ? `Carpeta: ${folderName}` : 'Elegir carpeta de backups'}
+              <Folder size={14} />
+              {folderName ? `Carpeta: ${folderName}` : 'Elegir carpeta de backups'}
             </Button>
           </div>
         ) : (
@@ -157,9 +162,13 @@ export function SettingsPage() {
 
       <Section title="Exportar / importar">
         <div className="flex flex-wrap gap-2">
-          <Button onClick={exportNow}>⬇ Exportar JSON</Button>
-          <Button variant="secondary" onClick={() => fileInput.current?.click()}>
-            ⬆ Importar JSON
+          <Button onClick={exportNow} className="gap-1.5">
+            <DownloadIcon size={14} />
+            Exportar JSON
+          </Button>
+          <Button variant="secondary" onClick={() => fileInput.current?.click()} className="gap-1.5">
+            <Upload size={14} />
+            Importar JSON
           </Button>
           <input
             ref={fileInput}
@@ -174,6 +183,19 @@ export function SettingsPage() {
           />
         </div>
         {importError && <p className="mt-2 text-sm text-zeon-400">{importError}</p>}
+      </Section>
+
+      <Section title="Proyecto">
+        <p className="text-xs text-hangar-300">
+          Gundam Tracker es de código abierto: aportaciones e informes de error son bienvenidos.
+        </p>
+        <Link
+          to="/about"
+          className="mt-3 inline-flex items-center gap-1.5 text-sm text-federation-400 hover:underline"
+        >
+          <CodeXml size={14} />
+          Acerca del proyecto y repositorio
+        </Link>
       </Section>
 
       {pendingImport && (
