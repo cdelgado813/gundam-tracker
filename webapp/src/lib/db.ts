@@ -89,7 +89,7 @@ export interface Backup {
   id?: number
   createdAt: number
   schemaVersion: number
-  /** JSON.stringify del payload de backup (sin JWT ni catálogo) */
+  /** JSON.stringify del payload de backup (solo datos de usuario, sin catálogo) */
   payload: string
 }
 

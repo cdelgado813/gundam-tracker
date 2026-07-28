@@ -14,6 +14,12 @@ function SyncBanner() {
   const unsynced = expansions.filter((e) => e.syncedAt === undefined).length
   const nothingSynced = expansions.length === 0 || unsynced === expansions.length
 
+  // Sin onboarding que lo posponga: la primera visita descarga el catálogo sola.
+  useEffect(() => {
+    if (nothingSynced && !sync.running && !sync.error) void sync.run()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [nothingSynced])
+
   if (sync.running) {
     const pct = sync.total ? Math.round((sync.done / sync.total) * 100) : 0
     return (

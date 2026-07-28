@@ -7,21 +7,31 @@
 - [x] 1.3 Crear proyecto `webapp/` con Vite + React + TypeScript + Tailwind v4, ESLint/Prettier, alias de paths y estructura de carpetas (features/, lib/, ui/)
 - [x] 1.4 Configurar Dexie.js con esquema tipado: tablas `settings`, `expansions`, `cards`, `prices`, `collection`, `wishlist`, `tradeLists`, `backups`; solicitar `navigator.storage.persist()`
 
-## 2. Capa de API y JWT onboarding
+## 2. Capa de API y JWT onboarding — RETIRADO (2026-07-28)
 
-- [x] 2.1 Cliente API con `baseUrl` configurable, interceptor Bearer y manejo centralizado de 401/403 y errores de red
-- [x] 2.2 ~~Cloudflare Worker proxy~~ N/A: CORS abierto verificado (1.2), llamada directa sin proxy
-- [x] 2.3 Tour de onboarding (pasos de bienvenida + explicación de dónde sacar el JWT) con captura, validación (parse `exp` + `GET /info`) y guardado del token
-- [x] 2.4 Modal de re-autenticación disparado por 401/403 o `exp` vencido, con reintento de la operación en curso y modo lectura offline
+Sustituido por la capacidad `catalog-data-pipeline` (ver design.md D2/D3): ningún visitante necesita
+JWT. `features/onboarding/*`, `lib/api.ts` y `lib/jwt.ts` se eliminaron del código.
+
+- [x] ~~2.1 Cliente API con baseUrl, interceptor Bearer, manejo 401/403~~ eliminado, ya no aplica
+- [x] ~~2.2 Cloudflare Worker proxy~~ N/A: el navegador nunca llama a CardTrader
+- [x] ~~2.3 Tour de onboarding con captura/validación de JWT~~ eliminado, ya no aplica
+- [x] ~~2.4 Modal de re-autenticación~~ eliminado, ya no aplica
+
+## 2b. Pipeline de datos en CI (sustituye al bloque 2)
+
+- [x] 2b.1 Script `scripts/sync-catalog.mjs`: games → expansions (Gundam) → blueprints por expansión (filtro `category_id 272`) → precios por expansión; publica `webapp/public/data/{expansions,cards/<id>,prices/<id>,meta}.json`
+- [x] 2b.2 Workflow `sync-catalog.yml`: cron diario + `workflow_dispatch`, usa el secret `CARDTRADER_JWT`, commitea cambios a `main` (dispara el deploy existente)
+- [x] 2b.3 Secret `CARDTRADER_JWT` configurado en el repositorio de GitHub
+- [x] 2b.4 `lib/staticData.ts`: capa de lectura de `/data/*.json` desde la webapp, sin autenticación
 
 ## 3. Catálogo maestro
 
-- [x] 3.1 Sincronización inicial: games → expansions (Gundam TCG) → blueprints por expansión, con progreso visible, descargas secuenciales con backoff y reanudación por expansión
-- [x] 3.2 Normalización de blueprints a tabla `cards` y comprobación diaria en segundo plano de expansiones nuevas con aviso no intrusivo
+- [x] 3.1 Sincronización inicial (cliente): expansions → cards desde `/data/*.json`, con progreso visible, arranque automático en la primera visita (sin onboarding que lo posponga)
+- [x] 3.2 Normalización a tabla `cards` y comprobación periódica en segundo plano de expansiones nuevas con aviso no intrusivo
 - [x] 3.3 Vistas de catálogo: grid de expansiones y grid de cartas con lazy-loading de imágenes y virtualización
 - [x] 3.4 Búsqueda global (nombre, número de coleccionista, rareza) sobre IndexedDB con índices adecuados (<200 ms)
 - [x] 3.5 Detalle de carta: imagen grande, datos maestros, estado en colección/wishlist y acciones rápidas
-- [x] 3.6 Precios de marketplace bajo demanda con caché TTL 24 h, timestamp visible y funcionamiento offline con último precio
+- [x] 3.6 Precios de marketplace desde `/data/prices/<id>.json` con caché TTL local, timestamp visible y funcionamiento offline con último precio
 
 ## 4. Colección, wishlist y trade lists
 
@@ -35,7 +45,7 @@
 
 ## 5. Persistencia y backups
 
-- [x] 5.1 Auto-backup debounced tras cambios y en `visibilitychange`, histórico rotativo de 5 en tabla `backups` (sin JWT ni catálogo)
+- [x] 5.1 Auto-backup debounced tras cambios y en `visibilitychange`, histórico rotativo de 5 en tabla `backups` (solo datos de usuario, sin catálogo)
 - [x] 5.2 Backup adicional a carpeta del usuario vía File System Access API con degradación elegante en Firefox/Safari
 - [x] 5.3 Export manual JSON versionado e import con validación Zod, vista previa y modos merge/replace
 
@@ -43,6 +53,6 @@
 
 - [x] 6.1 Sistema de diseño: tokens CSS (paleta mecha, dark/light), componentes base (botones, cards, sheets, toasts) con Radix + Tailwind, navegación mobile-first con transiciones
 - [x] 6.2 PWA: manifest, iconos, service worker con precache del shell y cache stale-while-revalidate para imágenes de cartas
-- [x] 6.3 CSP estricta y revisión de que el JWT nunca aparece en URLs, exports ni logs
+- [x] 6.3 CSP estricta (`connect-src 'self'`, sin dominios de CardTrader salvo imágenes); ninguna credencial en el navegador
 - [x] 6.4 Repositorio GitHub + workflow Actions de build y deploy a GitHub Pages con fichero CNAME
 - [x] 6.5 Registro CNAME en Cloudflare + HTTPS verificados y forzados. Pendiente del usuario: prueba manual en móvil real (instalar PWA, offline, compartir/importar lista entre dos navegadores)

@@ -1,7 +1,5 @@
-import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
 import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
-import { OnboardingTour } from '@/features/onboarding/OnboardingTour'
 import { CatalogPage } from '@/features/catalog/CatalogPage'
 import { ExpansionPage } from '@/features/catalog/ExpansionPage'
 import { CardDetailPage } from '@/features/catalog/CardDetailPage'
@@ -12,9 +10,8 @@ import { TradeListPage } from '@/features/trades/TradeListPage'
 import { ImportTradePage } from '@/features/trades/ImportTradePage'
 import { SettingsPage } from '@/features/backup/SettingsPage'
 import { AboutPage } from '@/features/about/AboutPage'
+import { WelcomeBanner } from '@/features/about/WelcomeBanner'
 import { installAutoBackup } from '@/features/backup/backup'
-import { ReauthModal } from '@/features/onboarding/ReauthModal'
-import { useAuth } from '@/features/onboarding/useAuth'
 
 installAutoBackup()
 
@@ -29,6 +26,7 @@ const tabs = [
 function Shell() {
   return (
     <div className="flex h-full flex-col">
+      <WelcomeBanner />
       <main className="min-h-0 flex-1 overflow-y-auto">
         <Routes>
           <Route path="/" element={<CatalogPage />} />
@@ -65,27 +63,13 @@ function Shell() {
   )
 }
 
-function Gate() {
-  const status = useAuth((s) => s.status)
-  if (status === 'loading') return null
-  return status === 'unauthenticated' ? <OnboardingTour /> : <Shell />
-}
-
 function App() {
-  const init = useAuth((s) => s.init)
-
-  useEffect(() => {
-    void init()
-  }, [init])
-
   return (
     <HashRouter>
       <Routes>
-        {/* Accesible sin JWT: cualquiera puede ver de qué trata el proyecto. */}
         <Route path="/about" element={<AboutPage />} />
-        <Route path="/*" element={<Gate />} />
+        <Route path="/*" element={<Shell />} />
       </Routes>
-      <ReauthModal />
     </HashRouter>
   )
 }

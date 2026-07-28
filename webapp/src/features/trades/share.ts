@@ -1,7 +1,7 @@
 import { deflateSync, inflateSync, strToU8, strFromU8 } from 'fflate'
 import type { CardCondition, TradeList, TradeListItem } from '@/lib/db'
 
-/** Formato versionado del payload compartido (design D5). Sin JWT ni datos ajenos a la lista. */
+/** Formato versionado del payload compartido (design D5). Sin datos ajenos a la lista. */
 interface SharePayloadV1 {
   v: 1
   name: string

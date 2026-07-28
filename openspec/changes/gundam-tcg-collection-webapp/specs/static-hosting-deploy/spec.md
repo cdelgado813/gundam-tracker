@@ -20,13 +20,9 @@ La aplicación SHALL ser una PWA válida (manifest + service worker) instalable 
 - **WHEN** el usuario visita la web desde un navegador móvil compatible
 - **THEN** puede instalarla en su pantalla de inicio y abrirla a pantalla completa sin conexión
 
-### Requirement: Acceso a la API de CardTrader desde el navegador
-El sistema SHALL verificar el comportamiento CORS de `api.cardtrader.com` desde origen web y, si la API no permite llamadas cross-origin desde navegador, SHALL interponer un proxy propio mínimo (Cloudflare Worker en el mismo dominio) que reenvíe las peticiones con la cabecera Authorization del usuario sin almacenar nada.
+### Requirement: Sin llamadas del navegador a CardTrader
+El sistema SHALL servir catálogo y precios como datos propios de mismo origen (ver `catalog-data-pipeline`); el navegador MUST NOT llamar directamente a `api.cardtrader.com` ni conocer ninguna credencial de esa API.
 
-#### Scenario: API con CORS permitido
-- **WHEN** las llamadas directas desde el navegador a `api.cardtrader.com` funcionan
-- **THEN** la app llama a la API directamente sin infraestructura adicional
-
-#### Scenario: API sin CORS
-- **WHEN** el navegador bloquea las llamadas directas por CORS
-- **THEN** las llamadas se enrutan por `https://gundam-api.poordevelopers.com` (Worker proxy sin estado ni logs de tokens) de forma transparente para el usuario
+#### Scenario: Petición a datos propios
+- **WHEN** la app necesita catálogo o precios
+- **THEN** los obtiene de `/data/*.json` en el propio dominio, sin cabecera de autenticación ni petición cross-origin

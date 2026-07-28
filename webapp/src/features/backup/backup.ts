@@ -14,7 +14,7 @@ const languageSchema = z.enum(['en', 'jp', 'zh-CN'])
 export const BACKUP_SCHEMA_VERSION = 1
 const MAX_BACKUPS = 5
 const DEBOUNCE_MS = 30_000
-/** Tablas de usuario incluidas en el backup. Nunca `settings` completo (contiene el JWT) ni catálogo. */
+/** Tablas de usuario incluidas en el backup. Nunca `settings` (preferencias locales) ni el catálogo. */
 const USER_TABLES = ['collection', 'wishlist', 'tradeLists'] as const
 
 const backupSchema = z.object({

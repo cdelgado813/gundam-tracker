@@ -2,12 +2,12 @@
 
 ## ADDED Requirements
 
-### Requirement: Descarga del maestro de Gundam TCG desde CardTrader
-La aplicación SHALL obtener el catálogo maestro desde la API de CardTrader v2: identificar el juego Gundam TCG vía `GET /api/v2/games`, listar sus expansiones vía `GET /api/v2/expansions` (filtrando por `game_id`) y descargar las cartas de cada expansión vía `GET /api/v2/blueprints/export?expansion_id=<id>`.
+### Requirement: Descarga del maestro de Gundam TCG desde datos estáticos propios
+La aplicación SHALL obtener el catálogo maestro desde los JSON estáticos publicados por `catalog-data-pipeline` (`/data/expansions.json`, `/data/cards/<id>.json`), servidos por el mismo origen y sin autenticación.
 
 #### Scenario: Sincronización inicial del catálogo
-- **WHEN** el usuario completa el onboarding y no hay catálogo cacheado
-- **THEN** la app descarga juego, expansiones y blueprints de Gundam TCG mostrando progreso por expansión y guarda todo en caché local
+- **WHEN** el usuario abre la app por primera vez y no hay catálogo cacheado
+- **THEN** la app descarga expansiones y cartas automáticamente mostrando progreso por expansión y guarda todo en caché local, sin pedir ninguna credencial
 
 #### Scenario: Fallo de red durante la sincronización
 - **WHEN** una descarga de expansión falla
@@ -35,8 +35,8 @@ La aplicación SHALL permitir explorar el catálogo por expansión y buscar cart
 - **WHEN** el usuario abre una carta
 - **THEN** ve imagen ampliada, datos maestros, su estado en colección/wishlist y acciones rápidas (añadir a colección, wishlist o trade list)
 
-### Requirement: Precios de mercado bajo demanda
-La aplicación SHALL obtener precios desde `GET /api/v2/marketplace/products?blueprint_id=<id>` (o por `expansion_id`) solo bajo demanda, cachearlos con marca de tiempo y mostrar la antigüedad del dato.
+### Requirement: Precios de mercado desde datos estáticos propios
+La aplicación SHALL obtener precios desde `/data/prices/<expansionId>.json` bajo demanda, cachearlos con marca de tiempo y mostrar la antigüedad del dato (que refleja cuándo el pipeline de CI generó el snapshot, no el momento exacto de la consulta).
 
 #### Scenario: Consulta de precio de una carta
 - **WHEN** el usuario abre el detalle de una carta con conexión

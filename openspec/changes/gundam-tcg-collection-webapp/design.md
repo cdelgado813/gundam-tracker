@@ -2,7 +2,7 @@
 
 ## Context
 
-Herramienta personal (y compartible) para gestionar la colección de Gundam TCG. La fuente de datos maestros es la API de CardTrader v2 (colección Postman en la raíz del repo: juegos, expansiones, blueprints, marketplace), autenticada con Bearer JWT que cada usuario obtiene de su propia cuenta de CardTrader. Restricciones clave:
+Herramienta personal (y compartible) para gestionar la colección de Gundam TCG. La fuente de datos maestros es la API de CardTrader v2 (colección Postman en la raíz del repo: juegos, expansiones, blueprints, marketplace), autenticada con Bearer JWT. **Revisión 2026-07-28:** el diseño original pedía el JWT a cada visitante en un tour de arranque; se comprobó que ninguno de los datos que la app lee de CardTrader es específico de una cuenta (catálogo y precios son públicos, iguales para cualquiera), así que el token del propietario se movió a un secret de CI y la webapp ya no pide ni conoce ningún JWT — ver D3. Restricciones clave:
 
 - Sin SaaS, sin backend propio con estado, sin cuentas de usuario.
 - Hosting: GitHub Pages (repo GitHub disponible) + dominio `poordevelopers.com` en Cloudflare (token API en variables de entorno del sistema).
@@ -31,20 +31,24 @@ SPA estática generada con Vite. React por ecosistema y por ser el camino más d
 - Estado: Zustand (ligero) + TanStack Query para llamadas a API con caché.
 - Persistencia: IndexedDB vía Dexie.js (esquema tipado, migraciones, `liveQuery` para reactividad).
 
-### D2. Datos maestros: caché completa en IndexedDB
-Flujo: `GET /games` → localizar Gundam TCG → `GET /expansions` filtrado por `game_id` → por expansión `GET /blueprints/export?expansion_id=`. Los blueprints se normalizan a una tabla `cards` (id, expansionId, name, collectorNumber, rarity, imageUrl, propiedades). Imágenes servidas desde las URLs de CardTrader con `loading="lazy"`; el service worker las cachea (Cache API, stale-while-revalidate) para uso offline. Precios de marketplace solo bajo demanda con TTL de 24 h y timestamp visible.
+### D2. Datos maestros: pipeline en CI + caché completa en IndexedDB (revisado 2026-07-28)
+`scripts/sync-catalog.mjs` corre en GitHub Actions (workflow `sync-catalog.yml`, cron diario + manual) con el token del propietario en el secret `CARDTRADER_JWT`: `GET /games` → localizar Gundam (`game_id 23`) → `GET /expansions` → por expansión `GET /blueprints/export` (filtrando `category_id 272`, cartas sueltas) y `GET /marketplace/products?expansion_id=`. El resultado se publica como JSON estático versionado en el propio repo bajo `webapp/public/data/` (`expansions.json`, `cards/<id>.json`, `prices/<id>.json`, `meta.json`) y se sirve junto con el sitio.
 
-### D3. Autenticación: JWT del usuario, solo en local
-El JWT se guarda en IndexedDB (no localStorage, para poder pedir persistencia; nunca en cookies). Un interceptor único añade `Authorization: Bearer` y centraliza el manejo de 401/403 → modal de re-captura de token. Validación al introducirlo: parse del payload (`exp`) + `GET /api/v2/info`. El token jamás sale hacia otro dominio ni se incluye en exports/URLs.
+La webapp nunca llama a `api.cardtrader.com`: descarga esos JSON estáticos (mismo origen, sin CORS ni auth) y los normaliza a la tabla `cards` de IndexedDB. Imágenes servidas directamente desde las URLs de CardTrader (públicas, sin auth) con `loading="lazy"`; el service worker las cachea (Cache API, stale-while-revalidate) para uso offline. Precios: el cliente lee `prices/<expansionId>.json` bajo demanda con TTL local de 12 h (los datos en sí solo cambian con cada ejecución del cron); `meta.json` expone cuándo se generó el snapshot para mostrar la antigüedad en Ajustes.
 
-### D4. CORS: llamada directa (RESUELTO 2026-07-28)
-Verificado con preflight OPTIONS y GET reales: `api.cardtrader.com` responde `access-control-allow-origin: *`, `access-control-allow-headers: authorization` y todos los métodos. **Se llama a la API directamente desde el navegador; no se crea ningún Worker proxy.** La capa de API del cliente mantiene una `baseUrl` configurable por si esto cambiara en el futuro.
+### D3. Sin autenticación de usuario (revisado 2026-07-28, sustituye al diseño original de JWT por visitante)
+Se comprobó que la API de CardTrader exige un token válido en *todas* las llamadas, incluidas las de catálogo público — pero nada de lo que la app lee (juegos, expansiones, cartas, precios) es específico de una cuenta: son los mismos datos para cualquiera. Pedir a cada visitante que generase y pegase su propio JWT era, por tanto, fricción de onboarding sin beneficio funcional, además de un riesgo si algún usuario reutilizaba un token con permisos de venta/compra en su cuenta real de CardTrader.
+
+Diseño anterior (retirado): tour de arranque pidiendo el JWT, guardado en IndexedDB, interceptor `Authorization: Bearer`, modal de re-autenticación en 401/403. Todo ese código (`features/onboarding/*`, `lib/api.ts`, `lib/jwt.ts`) se eliminó. La app abre directamente en el catálogo; un banner de bienvenida dismissible (sin bloquear nada) enlaza a `/about`.
+
+### D4. CORS — ya no aplica (RESUELTO 2026-07-28, revisado)
+Se verificó que `api.cardtrader.com` permite CORS (`access-control-allow-origin: *`), pero tras D2/D3 esto ya es irrelevante: el navegador nunca llama a esa API directamente. Solo el pipeline de CI (Node, sin navegador) habla con CardTrader.
 
 ### D5. Trade lists compartidas por URL fragment
 Payload JSON mínimo `{v, name, alias?, items:[{b, q, c?}]}` (blueprint id, cantidad, condición) → compresión con `CompressionStream`/fflate → base64url → `https://gundam.poordevelopers.com/#/t/<payload>`. Con ≤50 cartas el payload comprimido cabe holgadamente en una URL (<1.5 KB típico). El fragmento `#` no viaja al servidor: privacidad total. QR generado localmente (lib `qrcode`) y export a `.json` como alternativas. El receptor resuelve los blueprint ids contra su catálogo local y ve cruces con su wishlist.
 
 ### D6. Backups: rotación local + File System Access API
-Auto-backup (debounced tras cambios + `visibilitychange`) de las tablas de usuario (colección, wishlist, trade lists, settings sin JWT) a una tabla `backups` con histórico de 5. Opcionalmente, si el usuario concede una carpeta (File System Access API, Chromium), cada backup se escribe también como `gundam-backup-YYYYMMDD-HHmm.json`. Export/import manual con esquema versionado (`schemaVersion`) y validación con Zod; import ofrece merge o replace.
+Auto-backup (debounced tras cambios + `visibilitychange`) de las tablas de usuario (colección, wishlist, trade lists) a una tabla `backups` con histórico de 5. Opcionalmente, si el usuario concede una carpeta (File System Access API, Chromium), cada backup se escribe también como `gundam-backup-YYYYMMDD-HHmm.json`. Export/import manual con esquema versionado (`schemaVersion`) y validación con Zod; import ofrece merge o replace.
 
 ### D7. Deploy: GitHub Actions → GitHub Pages + Cloudflare DNS
 Workflow estándar `actions/deploy-pages` en push a `main`. Fichero `CNAME` con `gundam.poordevelopers.com`; registro CNAME en Cloudflare (DNS only o proxied, empezar DNS-only para dejar que GitHub emita el certificado) creable vía API con el token ya configurado en el sistema. Routing con hash router (`#/`) para evitar el problema de 404 en rutas profundas de GitHub Pages sin hacks.
@@ -54,12 +58,12 @@ Sistema propio inspirado en estética mecha/Gundam: dark mode por defecto, acent
 
 ## Risks / Trade-offs
 
-- [CORS desconocido en CardTrader] → D4: fallback a Worker; se valida en la primera tarea de implementación para no condicionar el resto.
-- [Rate limiting de la API al sincronizar muchas expansiones] → descargas secuenciales con backoff exponencial y progreso reanudable por expansión.
-- [El navegador puede purgar IndexedDB] → `navigator.storage.persist()` + backups automáticos a carpeta del usuario + export manual destacado en onboarding.
-- [JWT en local vulnerable a XSS] → sitio estático sin contenido de terceros inyectable, CSP estricta, sin `dangerouslySetInnerHTML`; riesgo residual aceptado (el token solo da acceso a la cuenta CardTrader del propio usuario).
+- [Rate limiting de la API al sincronizar muchas expansiones] → el pipeline de CI descarga secuencialmente con backoff exponencial y una pequeña pausa entre expansiones; corre una vez al día, no por visitante.
+- [El navegador puede purgar IndexedDB] → `navigator.storage.persist()` + backups automáticos a carpeta del usuario + export manual destacado.
+- [Token del propietario expuesto] → vive solo como secret de GitHub Actions, nunca en el bundle ni en el navegador; el sitio estático no hace ninguna llamada autenticada.
+- [Precios desactualizados entre ejecuciones del cron] → `meta.json` expone la fecha de generación y la UI la muestra; TTL local 12 h evita relecturas innecesarias del mismo snapshot.
 - [File System Access API no disponible en Firefox/Safari] → degradación a descargas periódicas recordadas + histórico interno de 5 backups.
-- [Blueprints de Gundam TCG podrían no incluir imágenes/atributos completos] → verificar en la primera sincronización real; la UI tolera campos ausentes con placeholders.
+- [Blueprints de Gundam TCG podrían no incluir imágenes/atributos completos] → verificado en la primera sincronización real; la UI tolera campos ausentes con placeholders.
 - [URL compartida depende del formato estable] → payload versionado (`v`) desde el día 1.
 
 ## Migration Plan

@@ -3,8 +3,7 @@ import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { CodeXml, Folder, RotateCw, Upload, Download as DownloadIcon } from 'lucide-react'
 import { db } from '@/lib/db'
-import { useAuth } from '@/features/onboarding/useAuth'
-import { JwtForm } from '@/features/onboarding/JwtForm'
+import { fetchStaticMeta, type StaticMeta } from '@/lib/staticData'
 import { useCatalogSync } from '@/features/catalog/sync'
 import {
   buildBackupPayload,
@@ -29,11 +28,10 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function SettingsPage() {
-  const accountName = useAuth((s) => s.accountName)
   const sync = useCatalogSync()
   const backups = useLiveQuery(() => db.backups.orderBy('createdAt').reverse().toArray()) ?? []
   const [folderName, setFolderName] = useState<string | null>(null)
-  const [showJwtForm, setShowJwtForm] = useState(false)
+  const [meta, setMeta] = useState<StaticMeta | null>(null)
   const [pendingImport, setPendingImport] = useState<BackupPayload | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
@@ -41,6 +39,9 @@ export function SettingsPage() {
 
   useEffect(() => {
     void getBackupFolderName().then(setFolderName)
+    void fetchStaticMeta()
+      .then(setMeta)
+      .catch(() => setMeta(null))
   }, [])
 
   useEffect(() => {
@@ -79,26 +80,17 @@ export function SettingsPage() {
     <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4">
       <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">AJUSTES</h1>
 
-      <Section title="Cuenta CardTrader">
-        <p className="text-sm text-hangar-100">{accountName ?? 'Token configurado'}</p>
-        <p className="mt-1 text-xs text-hangar-300">
-          El token vive solo en este dispositivo y solo se envía a api.cardtrader.com.
-        </p>
-        {showJwtForm ? (
-          <div className="mt-3">
-            <JwtForm submitLabel="Actualizar token" onSuccess={() => setShowJwtForm(false)} />
-          </div>
-        ) : (
-          <Button variant="secondary" className="mt-3" onClick={() => setShowJwtForm(true)}>
-            Cambiar token
-          </Button>
-        )}
-      </Section>
-
       <Section title="Catálogo">
         <p className="text-xs text-hangar-300">
-          Re-descarga el maestro completo si notas datos desactualizados.
+          El catálogo y los precios se publican automáticamente desde CardTrader; nadie necesita
+          iniciar sesión para usarlos.
         </p>
+        {meta && (
+          <p className="mt-1 text-xs text-hangar-300">
+            Datos publicados: {new Date(meta.generatedAt).toLocaleString('es-ES')} ·{' '}
+            {meta.expansionCount} expansiones · {meta.cardCount} cartas.
+          </p>
+        )}
         <Button
           variant="secondary"
           className="mt-3 gap-1.5"

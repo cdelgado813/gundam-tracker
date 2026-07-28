@@ -1,40 +1,27 @@
-import { fetchMarketplaceByBlueprint, fetchMarketplaceByExpansion } from '@/lib/api'
+import { fetchStaticPrices } from '@/lib/staticData'
 import { db, type PriceCache } from '@/lib/db'
-import type { ApiMarketplaceProduct } from '@/lib/api'
 
-export const PRICE_TTL_MS = 24 * 60 * 60 * 1000
+/** Los precios se refrescan por CI (ver scripts/sync-catalog.mjs); TTL local generoso. */
+export const PRICE_TTL_MS = 12 * 60 * 60 * 1000
 
-function toPriceCache(blueprintId: number, offers: ApiMarketplaceProduct[]): PriceCache {
-  // Las ofertas llegan ordenadas por precio ascendente (docs/api-notes.md)
-  const nearMint = offers.find((o) => o.properties_hash['condition'] === 'Near Mint')
-  return {
-    blueprintId,
-    minCents: offers[0]?.price_cents ?? null,
-    minNearMintCents: nearMint?.price_cents ?? null,
-    currency: offers[0]?.price_currency ?? 'EUR',
-    offersCount: offers.length,
-    fetchedAt: Date.now(),
-  }
-}
-
-/** Precio de una carta: caché si es fresco; si no, red y actualiza. Offline → caché aunque esté viejo. */
+/** Precio de una carta: caché si es fresco; si no, descarga los precios de toda su expansión. */
 export async function getPrice(blueprintId: number): Promise<PriceCache | null> {
   const cached = await db.prices.get(blueprintId)
   if (cached && Date.now() - cached.fetchedAt < PRICE_TTL_MS) return cached
+
+  const card = await db.cards.get(blueprintId)
+  if (!card) return cached ?? null
   try {
-    const res = await fetchMarketplaceByBlueprint(blueprintId)
-    const fresh = toPriceCache(blueprintId, res[String(blueprintId)] ?? [])
-    await db.prices.put(fresh)
-    return fresh
+    await refreshExpansionPrices(card.expansionId)
+    return (await db.prices.get(blueprintId)) ?? cached ?? null
   } catch {
     return cached ?? null
   }
 }
 
-/** Refresca precios de toda una expansión en una sola llamada (valoración por lotes, spec collection). */
+/** Refresca los precios de toda una expansión en una sola petición (valoración por lotes). */
 export async function refreshExpansionPrices(expansionId: number): Promise<number> {
-  const res = await fetchMarketplaceByExpansion(expansionId)
-  const rows = Object.entries(res).map(([bpId, offers]) => toPriceCache(Number(bpId), offers))
+  const rows = await fetchStaticPrices(expansionId)
   await db.prices.bulkPut(rows)
   return rows.length
 }
