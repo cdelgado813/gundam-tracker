@@ -5,7 +5,6 @@ import { ArrowLeft } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useOwnedMap, useWishlistSet } from './hooks'
-import { CollectionFilterChips } from '@/features/collections/CollectionFilterChips'
 
 export function ExpansionPage() {
   const { id } = useParams()
@@ -15,7 +14,6 @@ export function ExpansionPage() {
   const dimMissing = searchParams.get('from') === 'collection'
   const expansionId = Number(id)
   const [onlyMissing, setOnlyMissing] = useState(false)
-  const [selectedCollections, setSelectedCollections] = useState<Set<number>>(new Set())
   const expansion = useLiveQuery(() => db.expansions.get(expansionId), [expansionId])
   const cards =
     useLiveQuery(
@@ -25,18 +23,7 @@ export function ExpansionPage() {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
 
-  const allowedIds = useLiveQuery(async () => {
-    if (selectedCollections.size === 0) return null
-    const rows = await db.customCollectionCards
-      .where('collectionId')
-      .anyOf([...selectedCollections])
-      .toArray()
-    return new Set(rows.map((r) => r.cardId))
-  }, [selectedCollections])
-
-  const visible = cards
-    .filter((c) => !onlyMissing || !(owned.get(c.id) ?? 0))
-    .filter((c) => !allowedIds || allowedIds.has(c.id))
+  const visible = onlyMissing ? cards.filter((c) => !(owned.get(c.id) ?? 0)) : cards
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
 
@@ -69,9 +56,6 @@ export function ExpansionPage() {
             Solo faltantes
           </label>
         )}
-        <div className="mt-3">
-          <CollectionFilterChips selected={selectedCollections} onChange={setSelectedCollections} />
-        </div>
       </header>
 
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">

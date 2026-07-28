@@ -2,9 +2,82 @@ import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Package, RotateCw } from 'lucide-react'
-import { db } from '@/lib/db'
+import { db, type CustomCollection } from '@/lib/db'
 import { formatCents, refreshExpansionPrices } from '@/features/catalog/prices'
+import { collectionColorClasses } from '@/features/collections/colors'
 import { Button } from '@/ui/Button'
+
+interface CustomCollectionStats {
+  collection: CustomCollection
+  total: number
+  ownedUniques: number
+}
+
+function useCustomCollectionStats() {
+  return useLiveQuery(async () => {
+    const [collections, assignments, owned] = await Promise.all([
+      db.customCollections.orderBy('name').toArray(),
+      db.customCollectionCards.toArray(),
+      db.collection.toArray(),
+    ])
+    const ownedCardIds = new Set(owned.map((e) => e.cardId))
+    const byCollection = new Map<number, number[]>()
+    for (const a of assignments) {
+      if (!byCollection.has(a.collectionId)) byCollection.set(a.collectionId, [])
+      byCollection.get(a.collectionId)!.push(a.cardId)
+    }
+    const stats: CustomCollectionStats[] = collections.map((c) => {
+      const cardIds = byCollection.get(c.id!) ?? []
+      return {
+        collection: c,
+        total: cardIds.length,
+        ownedUniques: cardIds.filter((id) => ownedCardIds.has(id)).length,
+      }
+    })
+    return stats
+  })
+}
+
+function CustomCollectionsSection() {
+  const stats = useCustomCollectionStats()
+  if (!stats || stats.length === 0) return null
+
+  return (
+    <section className="mb-6">
+      <h2 className="mb-2 font-display text-xs font-bold uppercase tracking-widest text-hangar-300">
+        Mis colecciones
+      </h2>
+      <div className="flex flex-col gap-2">
+        {stats.map(({ collection, total, ownedUniques }) => {
+          const pct = total ? Math.round((ownedUniques / total) * 100) : 0
+          const colors = collectionColorClasses[collection.color]
+          return (
+            <Link
+              key={collection.id}
+              to={`/collections/${collection.id}`}
+              className="rounded-xl border border-hangar-800 bg-hangar-900 p-4 transition hover:border-hangar-600"
+            >
+              <div className="flex items-center justify-between">
+                <p className="flex items-center gap-2 truncate font-semibold text-hangar-100">
+                  <span className={`h-2 w-2 shrink-0 rounded-full ${colors.dot}`} />
+                  {collection.name}
+                </p>
+                <span className="ml-3 shrink-0 font-display text-xs text-hangar-300">
+                  {total ? `${ownedUniques}/${total} (${pct}%)` : 'sin cartas'}
+                </span>
+              </div>
+              {total > 0 && (
+                <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-hangar-800">
+                  <div className={`h-full rounded-full ${colors.dot}`} style={{ width: `${pct}%` }} />
+                </div>
+              )}
+            </Link>
+          )
+        })}
+      </div>
+    </section>
+  )
+}
 
 interface ExpansionStats {
   id: number
@@ -122,6 +195,8 @@ export function CollectionPage() {
         </div>
       </header>
 
+      <CustomCollectionsSection />
+
       {stats.length === 0 ? (
         <div className="py-16 text-center">
           <Package size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
@@ -135,6 +210,9 @@ export function CollectionPage() {
         </div>
       ) : (
         <div className="flex flex-col gap-2">
+          <h2 className="mb-1 font-display text-xs font-bold uppercase tracking-widest text-hangar-300">
+            Por expansión
+          </h2>
           {stats.map((s) => {
             const pct = s.total ? Math.round((s.ownedUniques / s.total) * 100) : 0
             return (

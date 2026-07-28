@@ -19,6 +19,8 @@ Hoy `CardTile` acepta un prop `dimIfMissing` que `ExpansionPage` activa siempre.
 
 ## Decisions
 
+**Revisión 2026-07-28:** D2 y D3 originales (filtro por colección en Catálogo/Expansión) se retiraron; una colección personalizada es una colección del usuario con su propia página de progreso, no un filtro de catálogo. En su lugar, D2 pasa a ser el filtro por rareza en Catálogo (dato que la API sí expone). Se añade D6: colección personalizada como colección con progreso propio.
+
 ### D1. Modelo de datos: colecciones personalizadas como tablas Dexie nuevas
 Dos tablas nuevas en `lib/db.ts`:
 - `customCollections`: `{ id, name, color, createdAt, updatedAt }`.
@@ -28,16 +30,17 @@ Se modela como tabla de relación separada (no como campo `tags: number[]` embeb
 
 Reutiliza el patrón ya existente de `tradeLists`/`tradeListItems` (mismo shape estructural), así que la UI de gestión (crear/renombrar/borrar, añadir/quitar carta) puede calcarse de `features/trades`.
 
-### D2. Filtro por colección: chips seleccionables, combinable con búsqueda de texto
-En `CatalogPage`, una fila de chips (una por colección personalizada existente) encima de los resultados; selección múltiple (OR entre colecciones seleccionadas), combinable con el texto del buscador (AND). En `ExpansionPage`, la misma fila de chips junto al checkbox "Solo faltantes" ya existente.
-
-Alternativa descartada: un `<select>` de colección única — las colecciones personalizadas se usan más como etiquetas que como carpetas excluyentes (una carta puede pertenecer a varias), así que multi-selección OR es más fiel al caso de uso.
+### D2. Filtro por rareza en Catálogo (sustituye al filtro por colección personalizada)
+En `CatalogPage`, chips de rareza calculados dinámicamente vía `db.cards.orderBy('rarity').uniqueKeys()` (índice ya existente), ordenados de común a raro con una tabla de orden conocida (`C, C+, C++, U, U+, R, R+, LR, LR+, LR++, SP, LK, P`) y cualquier valor nuevo al final por orden alfabético — así no hace falta tocar código si CardTrader añade una rareza. Selección múltiple (OR), combinable con el texto del buscador (AND). No se aplica en `ExpansionPage`: dentro de una expansión ya hay pocas cartas y el filtro de rareza aporta poco frente a la complejidad añadida.
 
 ### D3. Atenuar solo desde Colección: parámetro de navegación, no duplicar ruta
-`ExpansionPage` sigue siendo una única ruta `/expansion/:id`, pero los enlaces desde `CollectionPage` añaden `?from=collection`; `ExpansionPage` lee ese query param (`useSearchParams`) y solo entonces pasa `dimIfMissing` a `CardTile`. Los enlaces desde `CatalogPage` (y desde `CardDetailPage` al volver) no lo añaden, por lo que el comportamiento por defecto es "sin atenuar". Se descarta duplicar en dos componentes/rutas (`/expansion/:id` y `/collection/expansion/:id`) porque el resto de la vista (progreso, header, grid) es idéntico; solo cambia ese matiz visual.
+`ExpansionPage` sigue siendo una única ruta `/expansion/:id`, pero los enlaces desde `CollectionPage` añaden `?from=collection`; `ExpansionPage` lee ese query param (`useSearchParams`) y solo entonces pasa `dimIfMissing` a `CardTile`. Los enlaces desde `CatalogPage` (y desde `CardDetailPage` al volver) no lo añaden, por lo que el comportamiento por defecto es "sin atenuar". Se descarta duplicar en dos componentes/rutas (`/expansion/:id` y `/collection/expansion/:id`) porque el resto de la vista (progreso, header, grid) es idéntico; solo cambia ese matiz visual. `/collections/:id` (colecciones personalizadas, ver D6) siempre atenúa, sin necesidad de query param, porque no tiene una variante "modo catálogo".
 
 ### D4. Asignación de cartas a colecciones desde el detalle de carta
-`CardDetailPage` gana una sección "Colecciones" junto a wishlist/trade lists: chips togglables de las colecciones existentes + acción "nueva colección". Mismo patrón que el `TradeListPicker` ya implementado.
+`CardDetailPage` gana una sección "Colecciones" junto a wishlist/trade lists: chips togglables de las colecciones existentes + acción "nueva colección". Mismo patrón que el `TradeListPicker` ya implementado. Este es el único punto de contacto entre una colección personalizada y el flujo de Catálogo: se puede asignar una carta a una colección estando en cualquier contexto, pero examinar/filtrar por esa colección solo ocurre dentro de Colección (ver D6).
+
+### D6. Colección personalizada como colección con progreso, no como filtro
+Página nueva `/collections/:id` (`CustomCollectionDetailPage`): resuelve las cartas asignadas (`customCollectionCards` para ese `collectionId` → `bulkGet` en `cards`), calcula poseídas/total igual que `ExpansionPage`, con checkbox "solo faltantes" y `CardTile` siempre con `dimIfMissing`. `CollectionPage` gana una sección "Mis colecciones" antes de la lista por expansión, con la misma estructura visual (barra de progreso, X/Y). Se retira cualquier filtro por colección personalizada de `CatalogPage`/`ExpansionPage` (ver D2): una colección personalizada ya no es una lente sobre el catálogo completo, es una colección más del usuario.
 
 ### D5. Filosofía de poordevelopers en `/about`
 Nueva sección en `AboutPage` con el mensaje: herramientas simples, gratuitas y sin ánimo de lucro, sin tracking, para la comunidad — con enlace a `https://poordevelopers.com`. Contenido de texto fijo (no configurable), coherente con que el resto de la página ya es estática.

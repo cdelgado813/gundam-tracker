@@ -9,10 +9,20 @@
 - [x] 2.2 Vista de gestión (crear/renombrar/cambiar color/eliminar colecciones) — puede vivir dentro de Ajustes o como sección de la vista de Colección
 - [x] 2.3 Selector de color simple (paleta fija de acentos ya definidos en `index.css`, sin color picker libre)
 
-## 3. Filtros
+## 3. Filtros — REVISADO 2026-07-28 (ver proposal.md, design.md D2/D6)
 
-- [x] 3.1 Fila de chips de colecciones personalizadas (multi-selección OR) en `CatalogPage`, combinable con el buscador de texto
-- [x] 3.2 Misma fila de chips en `ExpansionPage`, combinable con el checkbox "Solo faltantes" existente
+Las colecciones personalizadas dejaron de filtrar Catálogo/Expansión; en su lugar son colecciones
+propias con progreso. El filtro real de "tipo de carta" en Catálogo es por rareza.
+
+- [x] ~~3.1 Chips de colecciones personalizadas en `CatalogPage`~~ retirado, sustituido por 7.1
+- [x] ~~3.2 Chips de colecciones personalizadas en `ExpansionPage`~~ retirado, no aplica
+
+## 7. Corrección: colecciones personalizadas como colección, filtro real por rareza
+
+- [x] 7.1 `RarityFilterChips` en `CatalogPage`: chips calculados dinámicamente de `db.cards.orderBy('rarity').uniqueKeys()`, multi-selección OR, combinable con el texto de búsqueda
+- [x] 7.2 Página `CustomCollectionDetailPage` (`/collections/:id`): cartas asignadas a la colección, progreso X/Y poseídas, "solo faltantes", `dimIfMissing` siempre activo
+- [x] 7.3 Sección "Mis colecciones" en `CollectionPage` con progreso resumido, enlazando a `/collections/:id`
+- [x] 7.4 Eliminar `CollectionFilterChips` (ya sin uso) y las referencias a filtrar catálogo/expansión por colección personalizada
 
 ## 4. Atenuación de faltantes solo desde Colección
 

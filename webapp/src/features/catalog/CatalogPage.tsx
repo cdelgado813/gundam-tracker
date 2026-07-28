@@ -5,7 +5,7 @@ import { Bell, CloudDownload } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useWishlistSet } from './hooks'
-import { CollectionFilterChips } from '@/features/collections/CollectionFilterChips'
+import { RarityFilterChips } from './RarityFilterChips'
 import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
 
@@ -81,21 +81,12 @@ function SyncBanner() {
   return null
 }
 
-/** Búsqueda por texto (nombre/número) combinable con un filtro de colecciones personalizadas (OR). */
-function CardResults({ query, collectionIds }: { query: string; collectionIds: Set<number> }) {
+/** Búsqueda por texto (nombre/número) combinable con un filtro de rarezas (OR). */
+function CardResults({ query, rarities }: { query: string; rarities: Set<string> }) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const results =
     useLiveQuery(async () => {
-      let allowedIds: Set<number> | null = null
-      if (collectionIds.size > 0) {
-        const rows = await db.customCollectionCards
-          .where('collectionId')
-          .anyOf([...collectionIds])
-          .toArray()
-        allowedIds = new Set(rows.map((r) => r.cardId))
-      }
-
       let merged: Card[]
       if (query.length >= 2) {
         const q = query.toLowerCase()
@@ -119,15 +110,14 @@ function CardResults({ query, collectionIds }: { query: string; collectionIds: S
             merged.push(c)
           }
         }
-      } else if (allowedIds) {
-        merged = (await db.cards.bulkGet([...allowedIds])).filter((c): c is Card => c != null)
-        merged.sort((a, b) => a.name.localeCompare(b.name))
+      } else if (rarities.size > 0) {
+        merged = await db.cards.where('rarity').anyOf([...rarities]).sortBy('name')
       } else {
         merged = []
       }
 
-      return allowedIds ? merged.filter((c) => allowedIds!.has(c.id)) : merged
-    }, [query, collectionIds]) ?? []
+      return rarities.size > 0 ? merged.filter((c) => rarities.has(c.rarity)) : merged
+    }, [query, rarities]) ?? []
 
   if (results.length === 0)
     return (
@@ -162,7 +152,7 @@ function useOwnedUniquesByExpansion(): Map<number, number> {
 
 export function CatalogPage() {
   const [query, setQuery] = useState('')
-  const [selectedCollections, setSelectedCollections] = useState<Set<number>>(new Set())
+  const [selectedRarities, setSelectedRarities] = useState<Set<string>>(new Set())
   const allExpansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
   // Algunos sets (p. ej. demo decks) no tienen cartas de tipo carta suelta: no aportan nada aquí.
   const expansions = allExpansions.filter((e) => e.cardCount !== 0)
@@ -197,10 +187,10 @@ export function CatalogPage() {
         </p>
       )}
 
-      <CollectionFilterChips selected={selectedCollections} onChange={setSelectedCollections} />
+      <RarityFilterChips selected={selectedRarities} onChange={setSelectedRarities} />
 
-      {query.trim().length >= 2 || selectedCollections.size > 0 ? (
-        <CardResults query={query.trim()} collectionIds={selectedCollections} />
+      {query.trim().length >= 2 || selectedRarities.size > 0 ? (
+        <CardResults query={query.trim()} rarities={selectedRarities} />
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {expansions.map((e) => {
