@@ -89,12 +89,14 @@ function CardResults({
   selecting,
   selectedIds,
   onToggleSelect,
+  onSelectAllChange,
 }: {
   query: string
   rarities: Set<string>
   selecting: boolean
   selectedIds: Set<number>
   onToggleSelect: (cardId: number) => void
+  onSelectAllChange: (ids: Set<number>) => void
 }) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
@@ -133,8 +135,18 @@ function CardResults({
       </p>
     )
 
+  const allResultsSelected = results.every((c) => selectedIds.has(c.id))
+
   return (
     <>
+      {selecting && (
+        <button
+          onClick={() => onSelectAllChange(allResultsSelected ? new Set() : new Set(results.map((c) => c.id)))}
+          className="mb-2 text-sm text-federation-400 hover:underline"
+        >
+          {allResultsSelected ? 'Ninguna' : `Seleccionar las ${results.length}`}
+        </button>
+      )}
       {allMatches.length > MAX_RESULTS && (
         <p className="mb-2 text-xs text-hangar-300">
           Mostrando los primeros {MAX_RESULTS} de {allMatches.length} resultados — afina la búsqueda
@@ -259,6 +271,7 @@ export function CatalogPage() {
           selecting={selecting}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}
+          onSelectAllChange={setSelectedIds}
         />
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">

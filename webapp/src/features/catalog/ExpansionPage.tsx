@@ -51,6 +51,11 @@ export function ExpansionPage() {
     setSelectedIds(new Set())
   }
 
+  const allVisibleSelected = visible.length > 0 && visible.every((c) => selectedIds.has(c.id))
+  const toggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(visible.map((c) => c.id)))
+  }
+
   return (
     <div className="mx-auto max-w-5xl p-4 pb-24">
       <header className="mb-4">
@@ -63,12 +68,20 @@ export function ExpansionPage() {
           </Link>
           {cards.length > 0 &&
             (selecting ? (
-              <button
-                onClick={stopSelecting}
-                className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
-              >
-                <X size={14} /> Cancelar
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleSelectAll}
+                  className="text-sm text-federation-400 hover:underline"
+                >
+                  {allVisibleSelected ? 'Ninguna' : 'Todas'}
+                </button>
+                <button
+                  onClick={stopSelecting}
+                  className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+                >
+                  <X size={14} /> Cancelar
+                </button>
+              </div>
             ) : (
               <button
                 onClick={() => setSelecting(true)}
