@@ -85,6 +85,30 @@ export interface TradeList {
   updatedAt: number
 }
 
+/** Paleta fija de acentos ya definida en index.css — sin color picker libre. */
+export const CUSTOM_COLLECTION_COLORS = [
+  'zeon',
+  'federation',
+  'newtype',
+  'haro',
+] as const
+export type CustomCollectionColor = (typeof CUSTOM_COLLECTION_COLORS)[number]
+
+export interface CustomCollection {
+  id?: number
+  name: string
+  color: CustomCollectionColor
+  createdAt: number
+  updatedAt: number
+}
+
+export interface CustomCollectionCard {
+  id?: number
+  collectionId: number
+  cardId: number
+  addedAt: number
+}
+
 export interface Backup {
   id?: number
   createdAt: number
@@ -102,6 +126,8 @@ export class GundamDB extends Dexie {
   wishlist!: EntityTable<WishlistEntry, 'id'>
   tradeLists!: EntityTable<TradeList, 'id'>
   backups!: EntityTable<Backup, 'id'>
+  customCollections!: EntityTable<CustomCollection, 'id'>
+  customCollectionCards!: EntityTable<CustomCollectionCard, 'id'>
 
   constructor() {
     super('gundam-tracker')
@@ -114,6 +140,12 @@ export class GundamDB extends Dexie {
       wishlist: '++id, &cardId, expansionId',
       tradeLists: '++id, kind, updatedAt',
       backups: '++id, createdAt',
+    })
+    // v2: colecciones personalizadas (tabla de relación separada de `cards`
+    // para sobrevivir a las resincronizaciones del catálogo, ver design.md D1)
+    this.version(2).stores({
+      customCollections: '++id, name',
+      customCollectionCards: '++id, collectionId, cardId, [collectionId+cardId]',
     })
   }
 }

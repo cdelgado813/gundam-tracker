@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { db } from '@/lib/db'
+import { db, CUSTOM_COLLECTION_COLORS } from '@/lib/db'
 
 const conditionSchema = z.enum([
   'Mint',
@@ -10,16 +10,41 @@ const conditionSchema = z.enum([
   'Poor',
 ])
 const languageSchema = z.enum(['en', 'jp', 'zh-CN'])
+const collectionColorSchema = z.enum(CUSTOM_COLLECTION_COLORS)
 
-export const BACKUP_SCHEMA_VERSION = 1
+export const BACKUP_SCHEMA_VERSION = 2
 const MAX_BACKUPS = 5
 const DEBOUNCE_MS = 30_000
 /** Tablas de usuario incluidas en el backup. Nunca `settings` (preferencias locales) ni el catálogo. */
-const USER_TABLES = ['collection', 'wishlist', 'tradeLists'] as const
+const USER_TABLES = [
+  'collection',
+  'wishlist',
+  'tradeLists',
+  'customCollections',
+  'customCollectionCards',
+] as const
 
 const backupSchema = z.object({
   schemaVersion: z.literal(BACKUP_SCHEMA_VERSION),
   exportedAt: z.number(),
+  customCollections: z.array(
+    z.object({
+      // id original conservado solo para remapear customCollectionCards al restaurar;
+      // al importar se crean filas nuevas con id propio (ver restoreBackup).
+      id: z.number(),
+      name: z.string(),
+      color: collectionColorSchema,
+      createdAt: z.number(),
+      updatedAt: z.number(),
+    }),
+  ),
+  customCollectionCards: z.array(
+    z.object({
+      collectionId: z.number(),
+      cardId: z.number(),
+      addedAt: z.number(),
+    }),
+  ),
   collection: z.array(
     z.object({
       cardId: z.number(),
@@ -60,16 +85,27 @@ const backupSchema = z.object({
 export type BackupPayload = z.infer<typeof backupSchema>
 
 export async function buildBackupPayload(): Promise<BackupPayload> {
-  const [collection, wishlist, tradeLists] = await Promise.all([
-    db.collection.toArray(),
-    db.wishlist.toArray(),
-    db.tradeLists.toArray(),
-  ])
+  const [collection, wishlist, tradeLists, customCollections, customCollectionCards] =
+    await Promise.all([
+      db.collection.toArray(),
+      db.wishlist.toArray(),
+      db.tradeLists.toArray(),
+      db.customCollections.toArray(),
+      db.customCollectionCards.toArray(),
+    ])
   const strip = <T extends { id?: number }>(rows: T[]) =>
     rows.map(({ id: _id, ...rest }) => rest)
   return {
     schemaVersion: BACKUP_SCHEMA_VERSION,
     exportedAt: Date.now(),
+    // customCollections SÍ conserva su id: customCollectionCards lo referencia
+    // como collectionId y se remapea al restaurar (ver restoreBackup).
+    customCollections: customCollections.map((c) => ({ ...c, id: c.id! })),
+    customCollectionCards: strip(customCollectionCards).map((cc) => ({
+      collectionId: cc.collectionId,
+      cardId: cc.cardId,
+      addedAt: cc.addedAt,
+    })),
     collection: strip(collection),
     wishlist: strip(wishlist),
     tradeLists: strip(tradeLists),
@@ -91,20 +127,51 @@ export function parseBackup(json: string): BackupPayload {
 }
 
 export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'merge'): Promise<void> {
-  await db.transaction('rw', db.collection, db.wishlist, db.tradeLists, async () => {
-    if (mode === 'replace') {
-      await Promise.all([db.collection.clear(), db.wishlist.clear(), db.tradeLists.clear()])
-    }
-    await db.collection.bulkAdd(payload.collection)
-    if (mode === 'replace') {
-      await db.wishlist.bulkAdd(payload.wishlist)
-    } else {
-      // merge: no dupliques cartas ya deseadas (wishlist tiene índice único por cardId)
-      const existing = new Set((await db.wishlist.toArray()).map((w) => w.cardId))
-      await db.wishlist.bulkAdd(payload.wishlist.filter((w) => !existing.has(w.cardId)))
-    }
-    await db.tradeLists.bulkAdd(payload.tradeLists)
-  })
+  await db.transaction(
+    'rw',
+    db.collection,
+    db.wishlist,
+    db.tradeLists,
+    db.customCollections,
+    db.customCollectionCards,
+    async () => {
+      if (mode === 'replace') {
+        await Promise.all([
+          db.collection.clear(),
+          db.wishlist.clear(),
+          db.tradeLists.clear(),
+          db.customCollections.clear(),
+          db.customCollectionCards.clear(),
+        ])
+      }
+      await db.collection.bulkAdd(payload.collection)
+      if (mode === 'replace') {
+        await db.wishlist.bulkAdd(payload.wishlist)
+      } else {
+        // merge: no dupliques cartas ya deseadas (wishlist tiene índice único por cardId)
+        const existing = new Set((await db.wishlist.toArray()).map((w) => w.cardId))
+        await db.wishlist.bulkAdd(payload.wishlist.filter((w) => !existing.has(w.cardId)))
+      }
+      await db.tradeLists.bulkAdd(payload.tradeLists)
+
+      // Los ids de customCollections del backup son locales a ese export: se crean filas
+      // nuevas y se remapea id antiguo -> id nuevo para reconstruir customCollectionCards.
+      const idMap = new Map<number, number>()
+      for (const c of payload.customCollections) {
+        const newId = (await db.customCollections.add({
+          name: c.name,
+          color: c.color,
+          createdAt: c.createdAt,
+          updatedAt: c.updatedAt,
+        })) as number
+        idMap.set(c.id, newId)
+      }
+      const cardsToAdd = payload.customCollectionCards
+        .map((cc) => ({ collectionId: idMap.get(cc.collectionId), cardId: cc.cardId, addedAt: cc.addedAt }))
+        .filter((cc): cc is { collectionId: number; cardId: number; addedAt: number } => cc.collectionId != null)
+      await db.customCollectionCards.bulkAdd(cardsToAdd)
+    },
+  )
 }
 
 // ---- Backup automático (spec local-persistence-backup) ----

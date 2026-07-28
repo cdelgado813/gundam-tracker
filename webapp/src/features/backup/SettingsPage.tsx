@@ -5,6 +5,7 @@ import { CodeXml, Folder, RotateCw, Upload, Download as DownloadIcon } from 'luc
 import { db } from '@/lib/db'
 import { fetchStaticMeta, type StaticMeta } from '@/lib/staticData'
 import { useCatalogSync } from '@/features/catalog/sync'
+import { CustomCollectionsManager } from '@/features/collections/CustomCollectionsManager'
 import {
   buildBackupPayload,
   chooseBackupFolder,
@@ -102,10 +103,18 @@ export function SettingsPage() {
         </Button>
       </Section>
 
+      <Section title="Colecciones personalizadas">
+        <p className="mb-3 text-xs text-hangar-300">
+          Agrupa cartas como quieras (tipos, favoritas, arcos…) y úsalas como filtro en el catálogo y
+          en tu colección.
+        </p>
+        <CustomCollectionsManager />
+      </Section>
+
       <Section title="Copias de seguridad">
         <p className="text-xs text-hangar-300">
-          Se guarda una copia automática de colección, wishlist y listas tras cada cambio (histórico
-          de 5). El token nunca se incluye.
+          Se guarda una copia automática de colección, wishlist, listas de intercambio y colecciones
+          personalizadas tras cada cambio (histórico de 5).
         </p>
         {folderBackupSupported() ? (
           <div className="mt-3 flex items-center gap-3">
@@ -201,6 +210,7 @@ export function SettingsPage() {
               <li>· {pendingImport.collection.length} entradas de colección</li>
               <li>· {pendingImport.wishlist.length} cartas en wishlist</li>
               <li>· {pendingImport.tradeLists.length} listas de trade</li>
+              <li>· {pendingImport.customCollections.length} colecciones personalizadas</li>
             </ul>
             <div className="mt-4 flex gap-2">
               <Button onClick={() => applyImport('merge')}>Fusionar</Button>

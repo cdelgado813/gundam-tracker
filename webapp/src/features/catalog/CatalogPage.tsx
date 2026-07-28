@@ -5,6 +5,7 @@ import { Bell, CloudDownload } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useWishlistSet } from './hooks'
+import { CollectionFilterChips } from '@/features/collections/CollectionFilterChips'
 import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
 
@@ -80,37 +81,60 @@ function SyncBanner() {
   return null
 }
 
-function SearchResults({ query }: { query: string }) {
+/** Búsqueda por texto (nombre/número) combinable con un filtro de colecciones personalizadas (OR). */
+function CardResults({ query, collectionIds }: { query: string; collectionIds: Set<number> }) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const results =
     useLiveQuery(async () => {
-      const q = query.toLowerCase()
-      const byName = await db.cards.where('searchName').startsWith(q).limit(60).toArray()
-      const byNumber = await db.cards
-        .where('collectorNumber')
-        .startsWithIgnoreCase(query)
-        .limit(30)
-        .toArray()
-      const contains =
-        byName.length < 20
-          ? (await db.cards.filter((c) => c.searchName.includes(q)).limit(40).toArray()).filter(
-              (c) => !c.searchName.startsWith(q),
-            )
-          : []
-      const seen = new Set<number>()
-      const merged: Card[] = []
-      for (const c of [...byNumber, ...byName, ...contains]) {
-        if (!seen.has(c.id)) {
-          seen.add(c.id)
-          merged.push(c)
-        }
+      let allowedIds: Set<number> | null = null
+      if (collectionIds.size > 0) {
+        const rows = await db.customCollectionCards
+          .where('collectionId')
+          .anyOf([...collectionIds])
+          .toArray()
+        allowedIds = new Set(rows.map((r) => r.cardId))
       }
-      return merged
-    }, [query]) ?? []
+
+      let merged: Card[]
+      if (query.length >= 2) {
+        const q = query.toLowerCase()
+        const byName = await db.cards.where('searchName').startsWith(q).limit(60).toArray()
+        const byNumber = await db.cards
+          .where('collectorNumber')
+          .startsWithIgnoreCase(query)
+          .limit(30)
+          .toArray()
+        const contains =
+          byName.length < 20
+            ? (await db.cards.filter((c) => c.searchName.includes(q)).limit(40).toArray()).filter(
+                (c) => !c.searchName.startsWith(q),
+              )
+            : []
+        const seen = new Set<number>()
+        merged = []
+        for (const c of [...byNumber, ...byName, ...contains]) {
+          if (!seen.has(c.id)) {
+            seen.add(c.id)
+            merged.push(c)
+          }
+        }
+      } else if (allowedIds) {
+        merged = (await db.cards.bulkGet([...allowedIds])).filter((c): c is Card => c != null)
+        merged.sort((a, b) => a.name.localeCompare(b.name))
+      } else {
+        merged = []
+      }
+
+      return allowedIds ? merged.filter((c) => allowedIds!.has(c.id)) : merged
+    }, [query, collectionIds]) ?? []
 
   if (results.length === 0)
-    return <p className="py-10 text-center text-sm text-hangar-300">Sin resultados para «{query}»</p>
+    return (
+      <p className="py-10 text-center text-sm text-hangar-300">
+        Sin resultados{query ? ` para «${query}»` : ''}.
+      </p>
+    )
 
   return (
     <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
@@ -138,6 +162,7 @@ function useOwnedUniquesByExpansion(): Map<number, number> {
 
 export function CatalogPage() {
   const [query, setQuery] = useState('')
+  const [selectedCollections, setSelectedCollections] = useState<Set<number>>(new Set())
   const allExpansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
   // Algunos sets (p. ej. demo decks) no tienen cartas de tipo carta suelta: no aportan nada aquí.
   const expansions = allExpansions.filter((e) => e.cardCount !== 0)
@@ -172,8 +197,10 @@ export function CatalogPage() {
         </p>
       )}
 
-      {query.trim().length >= 2 ? (
-        <SearchResults query={query.trim()} />
+      <CollectionFilterChips selected={selectedCollections} onChange={setSelectedCollections} />
+
+      {query.trim().length >= 2 || selectedCollections.size > 0 ? (
+        <CardResults query={query.trim()} collectionIds={selectedCollections} />
       ) : (
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {expansions.map((e) => {

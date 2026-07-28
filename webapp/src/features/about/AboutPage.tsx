@@ -1,19 +1,29 @@
 import { Link } from 'react-router-dom'
-import { ArrowLeft, CodeXml, ExternalLink, HardDrive, Lock, Repeat, ScanLine } from 'lucide-react'
+import {
+  ArrowLeft,
+  CodeXml,
+  ExternalLink,
+  HandHeart,
+  HardDrive,
+  Lock,
+  Repeat,
+  ScanLine,
+} from 'lucide-react'
 import { Button } from '@/ui/Button'
 
 const REPO_URL = 'https://github.com/cdelgado813/gundam-tracker'
+const POORDEVELOPERS_URL = 'https://poordevelopers.com'
 
 const points = [
   {
     Icon: Lock,
     title: 'Sin cuentas',
-    body: 'No hay usuarios ni contraseñas propias. Usas tu propio token de CardTrader, guardado solo en tu dispositivo.',
+    body: 'No hay usuarios ni contraseñas. Nadie necesita ninguna credencial para usar la app.',
   },
   {
     Icon: HardDrive,
     title: 'Todo en local',
-    body: 'Colección, wishlist y listas de intercambio se guardan en tu navegador, con copias de seguridad automáticas.',
+    body: 'Colección, wishlist, listas de intercambio y colecciones personalizadas se guardan en tu navegador, con copias de seguridad automáticas.',
   },
   {
     Icon: Repeat,
@@ -23,7 +33,7 @@ const points = [
   {
     Icon: ScanLine,
     title: 'Sin servidor propio',
-    body: 'Los datos del catálogo y los precios vienen directamente de la API pública de CardTrader.',
+    body: 'El catálogo y los precios se sincronizan periódicamente desde CardTrader y se publican como datos estáticos junto con el sitio.',
   },
 ]
 
@@ -75,8 +85,39 @@ export function AboutPage() {
         </div>
       </section>
 
+      <section className="mt-6 rounded-xl border border-hangar-700 bg-hangar-900 p-5">
+        <h2 className="font-display text-sm font-bold uppercase tracking-widest text-hangar-300">
+          Parte de poordevelopers
+        </h2>
+        <p className="mt-2 text-sm leading-relaxed text-hangar-300">
+          Gundam Tracker es un proyecto de{' '}
+          <a
+            href={POORDEVELOPERS_URL}
+            target="_blank"
+            rel="noreferrer"
+            className="text-federation-400 underline"
+          >
+            poordevelopers.com
+          </a>
+          , un colectivo que construye herramientas simples, gratuitas y sin ánimo de lucro. Sin
+          publicidad, sin trackear a nadie y sin vender datos: se hace software útil para la
+          comunidad, no para el negocio.
+        </p>
+        <div className="mt-4">
+          <Button
+            variant="secondary"
+            onClick={() => window.open(POORDEVELOPERS_URL, '_blank', 'noopener,noreferrer')}
+            className="gap-2"
+          >
+            <HandHeart size={16} />
+            poordevelopers.com
+            <ExternalLink size={14} />
+          </Button>
+        </div>
+      </section>
+
       <p className="mt-8 text-center text-xs text-hangar-300">
-        Construida con datos de la API pública de{' '}
+        Datos de cartas y precios de{' '}
         <a
           href="https://www.cardtrader.com"
           target="_blank"

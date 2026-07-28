@@ -140,7 +140,7 @@ export function CollectionPage() {
             return (
               <Link
                 key={s.id}
-                to={`/expansion/${s.id}`}
+                to={`/expansion/${s.id}?from=collection`}
                 className="rounded-xl border border-hangar-800 bg-hangar-900 p-4 transition hover:border-hangar-600"
               >
                 <div className="flex items-center justify-between">

@@ -6,6 +6,7 @@ import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/li
 import { addToCollection, setEntryQuantity } from '@/features/collection/data'
 import { toggleWishlist } from '@/features/wishlist/data'
 import { addToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
+import { CustomCollectionsPicker } from '@/features/collections/CustomCollectionsPicker'
 import { formatCents, getPrice, priceAge } from './prices'
 import { Button } from '@/ui/Button'
 
@@ -248,6 +249,7 @@ export function CardDetailPage() {
 
           <AddToCollectionForm cardId={cardId} expansionId={card.expansionId} />
           <OwnedEntries cardId={cardId} />
+          <CustomCollectionsPicker cardId={cardId} />
         </div>
       </div>
 
