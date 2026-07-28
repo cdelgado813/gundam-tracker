@@ -44,5 +44,5 @@
 - [x] 6.1 Sistema de diseño: tokens CSS (paleta mecha, dark/light), componentes base (botones, cards, sheets, toasts) con Radix + Tailwind, navegación mobile-first con transiciones
 - [x] 6.2 PWA: manifest, iconos, service worker con precache del shell y cache stale-while-revalidate para imágenes de cartas
 - [x] 6.3 CSP estricta y revisión de que el JWT nunca aparece en URLs, exports ni logs
-- [ ] 6.4 Repositorio GitHub + workflow Actions de build y deploy a GitHub Pages con fichero CNAME
-- [ ] 6.5 Registro CNAME `gundam.poordevelopers.com` en Cloudflare (API con token del sistema), verificación HTTPS y prueba end-to-end en móvil real (instalación PWA, offline, compartir/importar lista entre dos navegadores)
+- [x] 6.4 Repositorio GitHub + workflow Actions de build y deploy a GitHub Pages con fichero CNAME
+- [x] 6.5 Registro CNAME en Cloudflare + HTTPS verificados y forzados. Pendiente del usuario: prueba manual en móvil real (instalar PWA, offline, compartir/importar lista entre dos navegadores)
