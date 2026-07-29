@@ -77,6 +77,31 @@ export async function addCardsToOwned(cardIds: number[]): Promise<number> {
   })
 }
 
+/**
+ * Espejo de addCardsToOwned (design D1): −1 copia por carta, priorizando la
+ * entrada Near Mint/en; si no existe, degrada a la entrada con más copias.
+ * Entradas que llegan a 0 se eliminan; cartas sin copias se omiten.
+ * Devuelve cuántas cartas se decrementaron.
+ */
+export async function removeCardsFromOwned(cardIds: number[]): Promise<number> {
+  return db.transaction('rw', db.collection, async () => {
+    const now = Date.now()
+    let processed = 0
+    for (const cardId of cardIds) {
+      const entries = await db.collection.where('cardId').equals(cardId).toArray()
+      if (entries.length === 0) continue
+      const target =
+        entries.find((e) => e.condition === 'Near Mint' && e.language === 'en') ??
+        entries.reduce((a, b) => (b.quantity > a.quantity ? b : a))
+      if (target.id == null) continue
+      if (target.quantity <= 1) await db.collection.delete(target.id)
+      else await db.collection.update(target.id, { quantity: target.quantity - 1, updatedAt: now })
+      processed++
+    }
+    return processed
+  })
+}
+
 /** Cambia la cantidad de una entrada; a 0 la elimina. */
 export async function setEntryQuantity(entry: CollectionEntry, quantity: number): Promise<void> {
   if (entry.id == null) return

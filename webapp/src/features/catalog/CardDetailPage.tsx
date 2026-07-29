@@ -1,13 +1,13 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Check, ImageOff, Minus, Plus, Repeat, Star } from 'lucide-react'
+import { ArrowLeft, Check, ExternalLink, ImageOff, Minus, Plus, Repeat, Star } from 'lucide-react'
 import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/lib/db'
 import { addToCollection, setEntryQuantity } from '@/features/collection/data'
 import { toggleWishlist } from '@/features/wishlist/data'
 import { addToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
 import { CustomCollectionsPicker } from '@/features/collections/CustomCollectionsPicker'
-import { formatCents, getPrice, priceAge } from './prices'
+import { cardTraderUrl, formatCents, getPrice, priceAge } from './prices'
 import { Button } from '@/ui/Button'
 
 const CONDITIONS: CardCondition[] = [
@@ -242,6 +242,15 @@ export function CardDetailPage() {
                 {price.offersCount} ofertas · {priceAge(price.fetchedAt)}
               </p>
             )}
+            <a
+              href={cardTraderUrl(cardId)}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-hangar-700 py-2 text-sm text-federation-400 transition hover:bg-hangar-800"
+            >
+              Ver en CardTrader
+              <ExternalLink size={13} />
+            </a>
           </div>
 
           <div className="flex flex-wrap gap-2">

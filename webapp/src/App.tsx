@@ -4,6 +4,7 @@ import { CatalogPage } from '@/features/catalog/CatalogPage'
 import { ExpansionPage } from '@/features/catalog/ExpansionPage'
 import { CardDetailPage } from '@/features/catalog/CardDetailPage'
 import { CollectionPage } from '@/features/collection/CollectionPage'
+import { AllCardsPage } from '@/features/collection/AllCardsPage'
 import { CustomCollectionDetailPage } from '@/features/collections/CustomCollectionDetailPage'
 import { WishlistPage } from '@/features/wishlist/WishlistPage'
 import { TradesPage } from '@/features/trades/TradesPage'
@@ -34,6 +35,7 @@ function Shell() {
           <Route path="/expansion/:id" element={<ExpansionPage />} />
           <Route path="/card/:id" element={<CardDetailPage />} />
           <Route path="/collection" element={<CollectionPage />} />
+          <Route path="/collection/all" element={<AllCardsPage />} />
           <Route path="/collections/:id" element={<CustomCollectionDetailPage />} />
           <Route path="/wishlist" element={<WishlistPage />} />
           <Route path="/trades" element={<TradesPage />} />

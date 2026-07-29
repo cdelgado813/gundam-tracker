@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Bell, CloudDownload, ListChecks, X } from 'lucide-react'
+import { Bell, CloudDownload, ListChecks, Search, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useWishlistSet } from './hooks'
@@ -170,21 +170,6 @@ function CardResults({
   )
 }
 
-/** expansionId → nº de cartas únicas poseídas (reactivo). */
-function useOwnedUniquesByExpansion(): Map<number, number> {
-  return (
-    useLiveQuery(async () => {
-      const entries = await db.collection.toArray()
-      const perExp = new Map<number, Set<number>>()
-      for (const e of entries) {
-        if (!perExp.has(e.expansionId)) perExp.set(e.expansionId, new Set())
-        perExp.get(e.expansionId)!.add(e.cardId)
-      }
-      return new Map([...perExp].map(([expId, set]) => [expId, set.size]))
-    }) ?? new Map()
-  )
-}
-
 export function CatalogPage() {
   // Filtros en la URL (con replace) para que «volver» desde una carta los restaure
   // vía historial en vez de perderlos con el estado del componente (spec card-catalog).
@@ -206,7 +191,6 @@ export function CatalogPage() {
   const allExpansions = useLiveQuery(() => db.expansions.orderBy('code').toArray()) ?? []
   // Algunos sets (p. ej. demo decks) no tienen cartas de tipo carta suelta: no aportan nada aquí.
   const expansions = allExpansions.filter((e) => e.cardCount !== 0)
-  const ownedUniques = useOwnedUniquesByExpansion()
   const checkNew = useCatalogSync((s) => s.checkForNewExpansions)
   const [newCount, setNewCount] = useState(0)
   const showingResults = query.trim().length >= 2 || selectedRarities.size > 0
@@ -237,33 +221,51 @@ export function CatalogPage() {
 
   return (
     <div className="mx-auto max-w-5xl p-4 pb-24">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">CATÁLOGO</h1>
-        {showingResults &&
-          (selecting ? (
-            <button
-              onClick={stopSelecting}
-              className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
-            >
-              <X size={14} /> Cancelar
-            </button>
-          ) : (
-            <button
-              onClick={() => setSelecting(true)}
-              className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
-            >
-              <ListChecks size={14} /> Seleccionar
-            </button>
-          ))}
+      {/* Hero: el Catálogo está pensado para buscar (design D5) */}
+      <header className="mb-5 pt-4 text-center">
+        <div className="flex items-center justify-between">
+          <span className="w-20" aria-hidden />
+          <h1 className="font-display text-2xl font-bold tracking-widest text-hangar-100">
+            CATÁLOGO
+          </h1>
+          <span className="w-20 text-right">
+            {showingResults &&
+              (selecting ? (
+                <button
+                  onClick={stopSelecting}
+                  className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+                >
+                  <X size={14} /> Cancelar
+                </button>
+              ) : (
+                <button
+                  onClick={() => setSelecting(true)}
+                  className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+                >
+                  <ListChecks size={14} /> Seleccionar
+                </button>
+              ))}
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-hangar-300">
+          {expansions.length > 0
+            ? `${expansions.reduce((s, e) => s + (e.cardCount ?? 0), 0)} cartas del Gundam Card Game`
+            : 'Todo el Gundam Card Game, en tu bolsillo'}
+        </p>
+        <div className="relative mx-auto mt-4 max-w-xl">
+          <Search
+            size={18}
+            className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-hangar-300"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="Buscar por nombre o número (ST01-001)…"
+            className="w-full rounded-2xl border border-hangar-600 bg-hangar-900 py-3.5 pl-11 pr-4 text-base text-hangar-100 shadow-lg shadow-hangar-950/50 placeholder:text-hangar-300/50 focus:border-federation-400 focus:outline-none focus:ring-2 focus:ring-federation-500/20"
+          />
+        </div>
       </header>
-
-      <input
-        type="search"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Buscar por nombre o número (ST01-001)…"
-        className="mb-4 w-full rounded-xl border border-hangar-700 bg-hangar-900 px-4 py-3 text-sm text-hangar-100 placeholder:text-hangar-300/50 focus:border-federation-400 focus:outline-none"
-      />
 
       <SyncBanner />
       {newCount > 0 && (
@@ -300,7 +302,7 @@ export function CatalogPage() {
                   <p className="mt-0.5 font-mono text-xs uppercase text-hangar-300">{e.code}</p>
                 </div>
                 <span className="ml-3 shrink-0 rounded-lg bg-hangar-800 px-2 py-1 font-display text-xs text-hangar-300">
-                  {syncedCards != null ? `${ownedUniques.get(e.id) ?? 0}/${syncedCards}` : 'sin datos'}
+                  {syncedCards != null ? `${syncedCards} cartas` : 'sin datos'}
                 </span>
               </Link>
             )

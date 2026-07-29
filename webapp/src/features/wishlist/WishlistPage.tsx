@@ -1,38 +1,54 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Star } from 'lucide-react'
-import { db } from '@/lib/db'
+import { db, type Card, type WishlistEntry } from '@/lib/db'
+import { useCardFilter } from '@/ui/CardListControls'
 import { formatCents } from '@/features/catalog/prices'
 
 type SortKey = 'name' | 'expansion' | 'price'
 
-export function WishlistPage() {
-  const [sort, setSort] = useState<SortKey>('name')
+interface WishlistItem {
+  row: WishlistEntry
+  card: Card
+  expansionName: string
+  priceCents: number | null
+}
 
-  const data = useLiveQuery(async () => {
+function useWishlistData(): WishlistItem[] | undefined {
+  return useLiveQuery(async () => {
     const rows = await db.wishlist.toArray()
     const cards = await db.cards.bulkGet(rows.map((r) => r.cardId))
     const expansions = new Map((await db.expansions.toArray()).map((e) => [e.id, e]))
     const prices = new Map((await db.prices.toArray()).map((p) => [p.blueprintId, p]))
     return rows
       .map((row, i) => ({ row, card: cards[i] }))
-      .filter((x) => x.card != null)
+      .filter((x): x is { row: WishlistEntry; card: Card } => x.card != null)
       .map(({ row, card }) => ({
         row,
-        card: card!,
-        expansionName: expansions.get(card!.expansionId)?.name ?? '',
-        priceCents: prices.get(card!.id)?.minCents ?? null,
+        card,
+        expansionName: expansions.get(card.expansionId)?.name ?? '',
+        priceCents: prices.get(card.id)?.minCents ?? null,
       }))
   })
+}
+
+export function WishlistPage() {
+  const [sort, setSort] = useState<SortKey>('name')
+  const data = useWishlistData()
+  const cards = useMemo(() => (data ?? []).map((x) => x.card), [data])
+  const { filtered, controls } = useCardFilter(cards)
+  const filteredIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered])
 
   if (!data) return null
 
-  const sorted = [...data].sort((a, b) => {
-    if (sort === 'name') return a.card.name.localeCompare(b.card.name)
-    if (sort === 'expansion') return a.expansionName.localeCompare(b.expansionName)
-    return (a.priceCents ?? Number.MAX_SAFE_INTEGER) - (b.priceCents ?? Number.MAX_SAFE_INTEGER)
-  })
+  const sorted = data
+    .filter((x) => filteredIds.has(x.card.id))
+    .sort((a, b) => {
+      if (sort === 'name') return a.card.name.localeCompare(b.card.name)
+      if (sort === 'expansion') return a.expansionName.localeCompare(b.expansionName)
+      return (a.priceCents ?? Number.MAX_SAFE_INTEGER) - (b.priceCents ?? Number.MAX_SAFE_INTEGER)
+    })
 
   const priced = data.filter((x) => x.priceCents != null)
   const totalCents = priced.reduce((s, x) => s + (x.priceCents ?? 0) * x.row.desiredQuantity, 0)
@@ -65,6 +81,8 @@ export function WishlistPage() {
           </p>
         </div>
       )}
+
+      {data.length > 0 && controls}
 
       {data.length === 0 ? (
         <div className="py-16 text-center">

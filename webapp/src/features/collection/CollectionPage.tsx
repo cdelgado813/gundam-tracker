@@ -195,6 +195,18 @@ export function CollectionPage() {
         </div>
       </header>
 
+      {totalUniques > 0 && (
+        <Link
+          to="/collection/all"
+          className="mb-6 flex items-center justify-between rounded-xl border border-federation-500/30 bg-federation-500/10 p-4 transition hover:border-federation-500/60"
+        >
+          <p className="font-semibold text-hangar-100">Todas las cartas</p>
+          <span className="ml-3 shrink-0 font-display text-xs text-federation-400">
+            {totalUniques} únicas · {totalCopies} copias
+          </span>
+        </Link>
+      )}
+
       <CustomCollectionsSection />
 
       {stats.length === 0 ? (

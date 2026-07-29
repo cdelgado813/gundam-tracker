@@ -4,14 +4,15 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ListChecks, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
+import { useCardFilter } from '@/ui/CardListControls'
 import { useOwnedMap, useWishlistSet } from './hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
 export function ExpansionPage() {
   const { id } = useParams()
   const [searchParams] = useSearchParams()
-  // La atenuación de faltantes es exclusiva de la vista de Colección (ver design.md D3):
-  // solo se activa cuando se llega aquí con ?from=collection.
+  // Modo colección solo con ?from=collection (design D3 del change anterior):
+  // atenuación de faltantes, progreso y filtro «solo faltantes» viven solo ahí.
   const dimMissing = searchParams.get('from') === 'collection'
   const expansionId = Number(id)
   const [onlyMissing, setOnlyMissing] = useState(false)
@@ -26,6 +27,7 @@ export function ExpansionPage() {
     ) ?? []
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
     if (!toast) return
@@ -33,7 +35,7 @@ export function ExpansionPage() {
     return () => clearTimeout(t)
   }, [toast])
 
-  const visible = onlyMissing ? cards.filter((c) => !(owned.get(c.id) ?? 0)) : cards
+  const visible = onlyMissing ? filtered.filter((c) => !(owned.get(c.id) ?? 0)) : filtered
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
 
@@ -57,7 +59,7 @@ export function ExpansionPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl p-4 pb-24">
+    <div className="mx-auto max-w-5xl p-4 pb-32">
       <header className="mb-4">
         <div className="flex items-center justify-between">
           <Link
@@ -91,17 +93,27 @@ export function ExpansionPage() {
               </button>
             ))}
         </div>
-        <h1 className="mt-1 font-display text-xl font-bold text-hangar-100">{expansion?.name}</h1>
-        <div className="mt-2 flex items-center gap-3">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-hangar-800">
-            <div className="h-full rounded-full bg-newtype-400" style={{ width: `${pct}%` }} />
-          </div>
-          <span className="font-display text-xs text-hangar-300">
-            {ownedUniques}/{cards.length} ({pct}%)
-          </span>
-        </div>
+        <h1 className="mt-1 font-display text-xl font-bold text-hangar-100">
+          {expansion?.name}
+          {!dimMissing && cards.length > 0 && (
+            <span className="ml-2 font-sans text-sm font-normal text-hangar-300">
+              {cards.length} cartas
+            </span>
+          )}
+        </h1>
         {dimMissing && (
-          <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
+          <div className="mt-2 flex items-center gap-3">
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-hangar-800">
+              <div className="h-full rounded-full bg-newtype-400" style={{ width: `${pct}%` }} />
+            </div>
+            <span className="font-display text-xs text-hangar-300">
+              {ownedUniques}/{cards.length} ({pct}%)
+            </span>
+          </div>
+        )}
+        <div className="mt-3">{controls}</div>
+        {dimMissing && (
+          <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
             <input
               type="checkbox"
               checked={onlyMissing}
@@ -134,8 +146,7 @@ export function ExpansionPage() {
       )}
 
       {selecting && (
-        // La selección se mantiene tras cada acción: puede querer marcar en propiedad
-        // Y añadir a colección sobre la misma tanda sin volver a seleccionar.
+        // La selección se mantiene tras cada acción para poder encadenarlas.
         <BulkAssignBar selectedIds={selectedIds} onDone={setToast} onCancel={stopSelecting} />
       )}
       {toast && (

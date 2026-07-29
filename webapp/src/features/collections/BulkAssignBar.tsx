@@ -1,19 +1,47 @@
 import { useState } from 'react'
-import { FolderMinus, FolderPlus, PackagePlus, Plus, X } from 'lucide-react'
+import { FolderMinus, FolderPlus, PackageMinus, PackagePlus, Plus, X } from 'lucide-react'
 import { CUSTOM_COLLECTION_COLORS, type CustomCollectionColor } from '@/lib/db'
 import { Button } from '@/ui/Button'
-import { addCardsToOwned } from '@/features/collection/data'
+import { addCardsToOwned, removeCardsFromOwned } from '@/features/collection/data'
 import { useCustomCollections } from './hooks'
 import { addCardsToCollection, createCustomCollection, removeCardsFromCollection } from './data'
 import { collectionColorClasses } from './colors'
 
+function ActionButton({
+  Icon,
+  label,
+  danger,
+  disabled,
+  onClick,
+}: {
+  Icon: typeof PackagePlus
+  label: string
+  danger?: boolean
+  disabled?: boolean
+  onClick: () => void
+}) {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-2 rounded-xl border px-3 py-2.5 text-left text-sm font-medium transition disabled:pointer-events-none disabled:opacity-40 ${
+        danger
+          ? 'border-zeon-500/30 text-zeon-400 hover:bg-zeon-500/10'
+          : 'border-hangar-600 text-hangar-100 hover:bg-hangar-700'
+      }`}
+    >
+      <Icon size={16} className="shrink-0" />
+      {label}
+    </button>
+  )
+}
+
 /**
- * Barra flotante del modo selección (design D2). Acciones:
- * - «Marcar en propiedad»: +1 Near Mint/en por carta seleccionada, siempre disponible.
- * - «A colección»: asignar a una colección personalizada (existente o nueva).
- * - «Quitar de la colección»: solo cuando se monta dentro de una colección
- *   personalizada (`removeFromCollectionId`); pide confirmación y solo saca
- *   las cartas de esa agrupación — no toca la propiedad ni otras colecciones.
+ * Hoja inferior del modo selección (design D2): cabecera con recuento y cierre,
+ * y cuadrícula de acciones por eje — propiedad (+1/−1) | colecciones (añadir /
+ * quitar, esta última solo dentro de una colección personalizada). Las restas
+ * piden confirmación con recuento. La hoja no se cierra tras cada acción para
+ * poder encadenarlas sobre la misma selección.
  */
 export function BulkAssignBar({
   selectedIds,
@@ -32,11 +60,23 @@ export function BulkAssignBar({
   const [name, setName] = useState('')
   const [color, setColor] = useState<CustomCollectionColor>('federation')
 
-  const none = selectedIds.size === 0
+  const n = selectedIds.size
+  const none = n === 0
+  const plural = n !== 1 ? 's' : ''
 
   const markOwned = async () => {
-    const n = await addCardsToOwned([...selectedIds])
-    onDone(`${n} carta${n !== 1 ? 's' : ''} marcada${n !== 1 ? 's' : ''} en propiedad`)
+    const done = await addCardsToOwned([...selectedIds])
+    onDone(`+1 copia en ${done} carta${done !== 1 ? 's' : ''}`)
+  }
+
+  const unmarkOwned = async () => {
+    if (!window.confirm(`¿Restar una copia de ${n} carta${plural}? Las que no tengas se omiten.`)) return
+    const done = await removeCardsFromOwned([...selectedIds])
+    onDone(
+      done > 0
+        ? `−1 copia en ${done} carta${done !== 1 ? 's' : ''}`
+        : 'Ninguna de las seleccionadas tenía copias',
+    )
   }
 
   const assign = async (collectionId: number) => {
@@ -47,14 +87,9 @@ export function BulkAssignBar({
 
   const removeFromCollection = async () => {
     if (removeFromCollectionId == null) return
-    const n = selectedIds.size
-    // Acción destructiva sobre la curación de la colección: confirmar, igual que
-    // el resto de acciones irreversibles de la app (borrar colección, borrar lista).
-    if (!window.confirm(`¿Quitar ${n} carta${n !== 1 ? 's' : ''} de esta colección? No afecta a tu propiedad.`)) {
-      return
-    }
+    if (!window.confirm(`¿Quitar ${n} carta${plural} de esta colección? No afecta a tu propiedad.`)) return
     await removeCardsFromCollection(removeFromCollectionId, [...selectedIds])
-    onDone(`${n} carta${n !== 1 ? 's' : ''} quitadas de la colección`)
+    onDone(`${n} carta${plural} quitadas de la colección`)
   }
 
   const createAndAssign = async () => {
@@ -123,36 +158,32 @@ export function BulkAssignBar({
           </div>
         )}
 
-        <div className="flex items-center justify-between gap-2">
-          <span className="shrink-0 text-sm text-hangar-100">{selectedIds.size}</span>
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <Button onClick={markOwned} disabled={none} className="gap-1.5">
-              <PackagePlus size={14} />
-              En propiedad
-            </Button>
-            <Button
-              variant="secondary"
-              onClick={() => setOpen(!open)}
+        <div className="mb-2.5 flex items-center justify-between">
+          <span className="font-display text-sm font-semibold text-hangar-100">
+            {n} carta{plural} seleccionada{plural}
+          </span>
+          <button
+            aria-label="Salir del modo selección"
+            onClick={onCancel}
+            className="rounded-lg p-1.5 text-hangar-300 hover:bg-hangar-700 hover:text-hangar-100"
+          >
+            <X size={16} />
+          </button>
+        </div>
+
+        <div className="grid grid-cols-2 gap-2">
+          <ActionButton Icon={PackagePlus} label="+1 en propiedad" disabled={none} onClick={markOwned} />
+          <ActionButton Icon={PackageMinus} label="−1 de propiedad" danger disabled={none} onClick={unmarkOwned} />
+          <ActionButton Icon={FolderPlus} label="Añadir a colección" disabled={none} onClick={() => setOpen(!open)} />
+          {removeFromCollectionId != null && (
+            <ActionButton
+              Icon={FolderMinus}
+              label="Quitar de esta colección"
+              danger
               disabled={none}
-              className="gap-1.5"
-            >
-              <FolderPlus size={14} />
-              A colección
-            </Button>
-            {removeFromCollectionId != null && (
-              <Button variant="danger" onClick={removeFromCollection} disabled={none} className="gap-1.5">
-                <FolderMinus size={14} />
-                Quitar de la colección
-              </Button>
-            )}
-            <button
-              aria-label="Cancelar selección"
-              onClick={onCancel}
-              className="rounded-lg p-2 text-hangar-300 hover:bg-hangar-700 hover:text-hangar-100"
-            >
-              <X size={16} />
-            </button>
-          </div>
+              onClick={removeFromCollection}
+            />
+          )}
         </div>
       </div>
     </div>

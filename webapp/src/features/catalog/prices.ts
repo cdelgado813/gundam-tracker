@@ -26,6 +26,14 @@ export async function refreshExpansionPrices(expansionId: number): Promise<numbe
   return rows.length
 }
 
+/**
+ * Ficha pública de la carta en CardTrader, para comprobar precio real o comprar.
+ * Formato verificado (HTTP 200 con blueprint real); único punto a tocar si cambia.
+ */
+export function cardTraderUrl(blueprintId: number): string {
+  return `https://www.cardtrader.com/cards/${blueprintId}`
+}
+
 export function formatCents(cents: number | null | undefined, currency = 'EUR'): string {
   if (cents == null) return '—'
   return new Intl.NumberFormat('es-ES', { style: 'currency', currency }).format(cents / 100)

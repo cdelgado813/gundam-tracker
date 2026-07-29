@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ListChecks, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
+import { useCardFilter } from '@/ui/CardListControls'
 import { useOwnedMap, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
@@ -30,6 +31,7 @@ export function CustomCollectionDetailPage() {
     }, [collectionId]) ?? []
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
     if (!toast) return
@@ -41,7 +43,7 @@ export function CustomCollectionDetailPage() {
 
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
-  const visible = onlyMissing ? cards.filter((c) => !(owned.get(c.id) ?? 0)) : cards
+  const visible = onlyMissing ? filtered.filter((c) => !(owned.get(c.id) ?? 0)) : filtered
   const colors = collectionColorClasses[collection.color]
 
   const toggleSelect = (cardId: number) => {
@@ -130,15 +132,18 @@ export function CustomCollectionDetailPage() {
         )}
 
         {cards.length > 0 && (
-          <label className="mt-3 flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
-            <input
-              type="checkbox"
-              checked={onlyMissing}
-              onChange={(e) => setOnlyMissing(e.target.checked)}
-              className="accent-zeon-500"
-            />
-            Solo faltantes
-          </label>
+          <>
+            <div className="mt-3">{controls}</div>
+            <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
+              <input
+                type="checkbox"
+                checked={onlyMissing}
+                onChange={(e) => setOnlyMissing(e.target.checked)}
+                className="accent-zeon-500"
+              />
+              Solo faltantes
+            </label>
+          </>
         )}
       </header>
 
