@@ -12,13 +12,13 @@ const conditionSchema = z.enum([
 const languageSchema = z.enum(['en', 'jp', 'zh-CN'])
 const collectionColorSchema = z.enum(CUSTOM_COLLECTION_COLORS)
 
-export const BACKUP_SCHEMA_VERSION = 2
+export const BACKUP_SCHEMA_VERSION = 3
 const MAX_BACKUPS = 5
 const DEBOUNCE_MS = 30_000
 /** Tablas de usuario incluidas en el backup. Nunca `settings` (preferencias locales) ni el catálogo. */
 const USER_TABLES = [
   'collection',
-  'wishlist',
+  'wishlistLists',
   'tradeLists',
   'customCollections',
   'customCollectionCards',
@@ -56,12 +56,19 @@ const backupSchema = z.object({
       updatedAt: z.number(),
     }),
   ),
-  wishlist: z.array(
+  wishlistLists: z.array(
     z.object({
-      cardId: z.number(),
-      expansionId: z.number(),
-      desiredQuantity: z.number().int().positive(),
-      addedAt: z.number(),
+      name: z.string(),
+      authorAlias: z.string().optional(),
+      items: z.array(
+        z.object({
+          cardId: z.number(),
+          quantity: z.number().int().positive(),
+        }),
+      ),
+      kind: z.enum(['own', 'received']),
+      createdAt: z.number(),
+      updatedAt: z.number(),
     }),
   ),
   tradeLists: z.array(
@@ -85,10 +92,10 @@ const backupSchema = z.object({
 export type BackupPayload = z.infer<typeof backupSchema>
 
 export async function buildBackupPayload(): Promise<BackupPayload> {
-  const [collection, wishlist, tradeLists, customCollections, customCollectionCards] =
+  const [collection, wishlistLists, tradeLists, customCollections, customCollectionCards] =
     await Promise.all([
       db.collection.toArray(),
-      db.wishlist.toArray(),
+      db.wishlistLists.toArray(),
       db.tradeLists.toArray(),
       db.customCollections.toArray(),
       db.customCollectionCards.toArray(),
@@ -107,7 +114,7 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
       addedAt: cc.addedAt,
     })),
     collection: strip(collection),
-    wishlist: strip(wishlist),
+    wishlistLists: strip(wishlistLists),
     tradeLists: strip(tradeLists),
   } as BackupPayload
 }
@@ -130,7 +137,7 @@ export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'm
   await db.transaction(
     'rw',
     db.collection,
-    db.wishlist,
+    db.wishlistLists,
     db.tradeLists,
     db.customCollections,
     db.customCollectionCards,
@@ -138,20 +145,14 @@ export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'm
       if (mode === 'replace') {
         await Promise.all([
           db.collection.clear(),
-          db.wishlist.clear(),
+          db.wishlistLists.clear(),
           db.tradeLists.clear(),
           db.customCollections.clear(),
           db.customCollectionCards.clear(),
         ])
       }
       await db.collection.bulkAdd(payload.collection)
-      if (mode === 'replace') {
-        await db.wishlist.bulkAdd(payload.wishlist)
-      } else {
-        // merge: no dupliques cartas ya deseadas (wishlist tiene índice único por cardId)
-        const existing = new Set((await db.wishlist.toArray()).map((w) => w.cardId))
-        await db.wishlist.bulkAdd(payload.wishlist.filter((w) => !existing.has(w.cardId)))
-      }
+      await db.wishlistLists.bulkAdd(payload.wishlistLists)
       await db.tradeLists.bulkAdd(payload.tradeLists)
 
       // Los ids de customCollections del backup son locales a ese export: se crean filas

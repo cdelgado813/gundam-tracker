@@ -14,7 +14,13 @@ import {
 } from 'lucide-react'
 import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/lib/db'
 import { addToCollection, setEntryQuantity } from '@/features/collection/data'
-import { toggleWishlist } from '@/features/wishlist/data'
+import {
+  addToWishlistList,
+  createWishlistList,
+  removeCardFromAllOwnWishlistLists,
+  wishlistListUnits,
+  WISHLIST_LIST_MAX_UNITS,
+} from '@/features/wishlist/data'
 import { addToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
 import { CustomCollectionsPicker } from '@/features/collections/CustomCollectionsPicker'
 import { cardTraderUrl, formatCents, getPrice, languagePrices, offersForLanguage, priceAge } from './prices'
@@ -75,10 +81,12 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
             await addToCollection(cardId, expansionId, qty, condition, language)
             setAdded(true)
             setTimeout(() => setAdded(false), 1500)
-            // Spec wishlist: si estaba deseada, ofrecer retirarla al conseguirla
-            const wl = await db.wishlist.where('cardId').equals(cardId).first()
-            if (wl?.id != null && window.confirm(t('card.wishlistRemoveConfirm'))) {
-              await db.wishlist.delete(wl.id)
+            // Spec wishlist: si estaba deseada en alguna lista propia, ofrecer retirarla al conseguirla
+            const inAnyList = (await db.wishlistLists.where('kind').equals('own').toArray()).some((l) =>
+              l.items.some((i) => i.cardId === cardId),
+            )
+            if (inAnyList && window.confirm(t('card.wishlistRemoveConfirm'))) {
+              await removeCardFromAllOwnWishlistLists(cardId)
             }
           }}
         >
@@ -173,6 +181,54 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
   )
 }
 
+function WishlistListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: string) => void }) {
+  const t = useT()
+  const lists = useLiveQuery(() => db.wishlistLists.where('kind').equals('own').toArray()) ?? []
+  const [open, setOpen] = useState(false)
+
+  const add = async (listId: number) => {
+    const added = await addToWishlistList(listId, cardId, 1)
+    onDone(added > 0 ? t('card.addedToList') : t('card.listFull', { max: WISHLIST_LIST_MAX_UNITS }))
+    setOpen(false)
+  }
+
+  return (
+    <div className="relative">
+      <Button variant="secondary" onClick={() => setOpen(!open)} className="gap-1.5">
+        <Star size={14} />
+        {t('card.toWishlist')}
+      </Button>
+      {open && (
+        <div className="absolute bottom-full left-0 z-10 mb-2 w-56 rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
+          {lists.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => add(l.id!)}
+              className="flex w-full items-center justify-between rounded-lg px-3 py-2 text-left text-sm hover:bg-hangar-700"
+            >
+              <span className="truncate">{l.name}</span>
+              <span className="ml-2 shrink-0 text-xs text-hangar-300">
+                {wishlistListUnits(l)}/{WISHLIST_LIST_MAX_UNITS}
+              </span>
+            </button>
+          ))}
+          <button
+            onClick={async () => {
+              const name = `Lista ${lists.length + 1}`
+              const id = await createWishlistList(name)
+              await add(id)
+            }}
+            className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+          >
+            <Plus size={14} />
+            {t('card.newList')}
+          </button>
+        </div>
+      )}
+    </div>
+  )
+}
+
 /** Fila de precio de un idioma; si el snapshot trae ofertas, se puede desplegar la lista. */
 function LanguagePriceRow({
   lang,
@@ -238,9 +294,6 @@ export function CardDetailPage() {
     () => (card ? db.expansions.get(card.expansionId) : undefined),
     [card?.expansionId],
   )
-  const wishlisted =
-    useLiveQuery(async () => (await db.wishlist.where('cardId').equals(cardId).count()) > 0, [cardId]) ??
-    false
   const [price, setPrice] = useState<PriceCache | null>(null)
   const byLanguage = languagePrices(price ?? undefined)
   // Idiomas de los que el usuario tiene copias, para resaltar su fila de precio.
@@ -353,17 +406,7 @@ export function CardDetailPage() {
           </div>
 
           <div className="flex flex-wrap gap-2">
-            <Button
-              variant="secondary"
-              className="gap-1.5"
-              onClick={async () => {
-                const on = await toggleWishlist(cardId, card.expansionId)
-                setToast(on ? t('card.addedToWishlist') : t('card.removedFromWishlist'))
-              }}
-            >
-              <Star size={14} fill={wishlisted ? 'currentColor' : 'none'} />
-              {wishlisted ? t('card.inWishlist') : t('nav.wishlist')}
-            </Button>
+            <WishlistListPicker cardId={cardId} onDone={setToast} />
             <TradeListPicker cardId={cardId} onDone={setToast} />
           </div>
 

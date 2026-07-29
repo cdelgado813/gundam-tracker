@@ -13,12 +13,14 @@ export function useOwnedMap(): Map<number, number> {
   )
 }
 
-/** Set de cardIds en wishlist (reactivo). */
+/** Set de cardIds presentes en alguna lista de wishlist propia (reactivo). */
 export function useWishlistSet(): Set<number> {
   return (
     useLiveQuery(async () => {
-      const rows = await db.wishlist.toArray()
-      return new Set(rows.map((r) => r.cardId))
+      const lists = await db.wishlistLists.where('kind').equals('own').toArray()
+      const ids = new Set<number>()
+      for (const list of lists) for (const item of list.items) ids.add(item.cardId)
+      return ids
     }) ?? new Set()
   )
 }

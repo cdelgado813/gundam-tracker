@@ -1,22 +1,21 @@
 import { useMemo } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { Inbox, Star, TriangleAlert } from 'lucide-react'
+import { Inbox, Package, TriangleAlert } from 'lucide-react'
 import { db } from '@/lib/db'
-import { decodeTradeList } from './share'
+import { decodeWishlistList } from './share'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
 
-export function ImportTradePage() {
+export function ImportWishlistPage() {
   const t = useT()
   const { payload } = useParams()
   const navigate = useNavigate()
 
   const decoded = useMemo(() => {
     try {
-      return { ok: true as const, list: decodeTradeList(payload ?? '') }
+      return { ok: true as const, list: decodeWishlistList(payload ?? '') }
     } catch (err) {
-      // El detalle del error vive en share.ts; aquí se muestra el mensaje traducido.
       void err
       return { ok: false as const }
     }
@@ -26,10 +25,9 @@ export function ImportTradePage() {
     if (!decoded.ok) return null
     const ids = decoded.list.items.map((i) => i.cardId)
     const cards = await db.cards.bulkGet(ids)
-    const ownWishlistLists = await db.wishlistLists.where('kind').equals('own').toArray()
-    const wishlistIds = new Set(ownWishlistLists.flatMap((l) => l.items.map((i) => i.cardId)))
+    const ownedIds = new Set((await db.collection.toArray()).map((c) => c.cardId))
     const missing = decoded.list.items.filter((_, i) => cards[i] == null)
-    return { cards, wishlistIds, missingCount: missing.length }
+    return { cards, ownedIds, missingCount: missing.length }
   }, [decoded])
 
   if (!decoded.ok) {
@@ -46,12 +44,12 @@ export function ImportTradePage() {
   if (!resolution) return null
 
   const { list } = decoded
-  const { cards, wishlistIds, missingCount } = resolution
-  const matches = list.items.filter((i) => wishlistIds.has(i.cardId)).length
+  const { cards, ownedIds, missingCount } = resolution
+  const matches = list.items.filter((i) => ownedIds.has(i.cardId)).length
 
   const save = async () => {
     const now = Date.now()
-    const id = await db.tradeLists.add({
+    const id = await db.wishlistLists.add({
       name: list.name,
       authorAlias: list.alias,
       items: list.items,
@@ -59,7 +57,7 @@ export function ImportTradePage() {
       createdAt: now,
       updatedAt: now,
     })
-    navigate(`/trades/${id}`)
+    navigate(`/wishlist/${id}`)
   }
 
   return (
@@ -73,8 +71,8 @@ export function ImportTradePage() {
         </p>
         {matches > 0 && (
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-haro-400/10 px-3 py-1 text-sm text-haro-400">
-            <Star size={13} fill="currentColor" />
-            {t('trades.wishlistMatches', { n: matches })}
+            <Package size={13} />
+            {t('wishlist.collectionMatches', { n: matches })}
           </p>
         )}
       </header>
@@ -88,14 +86,12 @@ export function ImportTradePage() {
       <ul className="flex flex-col gap-2">
         {list.items.map((item, i) => {
           const card = cards[i]
-          const inWishlist = wishlistIds.has(item.cardId)
+          const isOwned = ownedIds.has(item.cardId)
           return (
             <li
-              key={`${item.cardId}-${item.condition ?? ''}`}
+              key={item.cardId}
               className={`flex items-center gap-3 rounded-xl border p-2.5 ${
-                inWishlist
-                  ? 'border-haro-400/40 bg-haro-400/5'
-                  : 'border-hangar-800 bg-hangar-900'
+                isOwned ? 'border-haro-400/40 bg-haro-400/5' : 'border-hangar-800 bg-hangar-900'
               }`}
             >
               <div className="h-16 w-12 shrink-0 overflow-hidden rounded-md bg-hangar-800">
@@ -105,14 +101,11 @@ export function ImportTradePage() {
               </div>
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-1 truncate text-sm font-semibold text-hangar-100">
-                  {inWishlist && (
-                    <Star size={12} fill="currentColor" className="shrink-0 text-haro-400" />
-                  )}
+                  {isOwned && <Package size={12} className="shrink-0 text-haro-400" />}
                   <span className="truncate">{card?.name ?? `Blueprint #${item.cardId}`}</span>
                 </p>
                 <p className="text-xs text-hangar-300">
                   ×{item.quantity}
-                  {item.condition ? ` · ${item.condition}` : ''}
                   {card ? ` · ${card.collectorNumber}` : ''}
                 </p>
               </div>
@@ -122,7 +115,7 @@ export function ImportTradePage() {
       </ul>
 
       <div className="mt-5 flex justify-center">
-        <Button onClick={save}>{t('trades.saveReceived')}</Button>
+        <Button onClick={save}>{t('wishlist.saveReceived')}</Button>
       </div>
     </div>
   )

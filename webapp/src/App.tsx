@@ -9,10 +9,11 @@ import { CardDetailPage } from '@/features/catalog/CardDetailPage'
 import { CollectionPage } from '@/features/collection/CollectionPage'
 import { AllCardsPage } from '@/features/collection/AllCardsPage'
 import { CustomCollectionDetailPage } from '@/features/collections/CustomCollectionDetailPage'
-import { WishlistPage } from '@/features/wishlist/WishlistPage'
+import { WishlistListsPage } from '@/features/wishlist/WishlistListsPage'
+import { WishlistListDetailPage } from '@/features/wishlist/WishlistListDetailPage'
 import { TradesPage } from '@/features/trades/TradesPage'
 import { TradeListPage } from '@/features/trades/TradeListPage'
-import { ImportTradePage } from '@/features/trades/ImportTradePage'
+import { ImportPage } from '@/features/share/ImportPage'
 import { SettingsPage } from '@/features/backup/SettingsPage'
 import { AboutPage } from '@/features/about/AboutPage'
 import { WelcomeBanner } from '@/features/about/WelcomeBanner'
@@ -41,10 +42,12 @@ function Shell() {
           <Route path="/collection" element={<CollectionPage />} />
           <Route path="/collection/all" element={<AllCardsPage />} />
           <Route path="/collections/:id" element={<CustomCollectionDetailPage />} />
-          <Route path="/wishlist" element={<WishlistPage />} />
+          <Route path="/wishlist" element={<WishlistListsPage />} />
+          <Route path="/wishlist/:id" element={<WishlistListDetailPage />} />
           <Route path="/trades" element={<TradesPage />} />
           <Route path="/trades/:id" element={<TradeListPage />} />
-          <Route path="/t/:payload" element={<ImportTradePage />} />
+          <Route path="/s/:payload" element={<ImportPage />} />
+          <Route path="/t/:payload" element={<ImportPage />} />
           <Route path="/settings" element={<SettingsPage />} />
         </Routes>
       </main>

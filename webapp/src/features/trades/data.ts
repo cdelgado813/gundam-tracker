@@ -1,6 +1,6 @@
 import { db, type CardCondition, type TradeList } from '@/lib/db'
 
-export const TRADE_LIST_MAX_UNITS = 50
+export const TRADE_LIST_MAX_UNITS = 100
 
 export function tradeListUnits(list: TradeList): number {
   return list.items.reduce((sum, i) => sum + i.quantity, 0)

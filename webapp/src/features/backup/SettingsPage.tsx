@@ -226,7 +226,7 @@ export function SettingsPage() {
             </p>
             <ul className="mt-2 text-sm text-hangar-100">
               <li>· {t('settings.restoreCollection', { n: pendingImport.collection.length })}</li>
-              <li>· {t('settings.restoreWishlist', { n: pendingImport.wishlist.length })}</li>
+              <li>· {t('settings.restoreWishlist', { n: pendingImport.wishlistLists.length })}</li>
               <li>· {t('settings.restoreTrades', { n: pendingImport.tradeLists.length })}</li>
               <li>· {t('settings.restoreCustom', { n: pendingImport.customCollections.length })}</li>
             </ul>

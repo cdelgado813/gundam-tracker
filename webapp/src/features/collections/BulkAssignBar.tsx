@@ -14,7 +14,13 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { db, CUSTOM_COLLECTION_COLORS, type CustomCollectionColor } from '@/lib/db'
 import { Button } from '@/ui/Button'
 import { addCardsToOwned, removeCardsFromOwned } from '@/features/collection/data'
-import { addCardsToWishlist, removeCardsFromWishlist } from '@/features/wishlist/data'
+import {
+  addCardsToWishlistList,
+  createWishlistList,
+  removeCardsFromWishlistList,
+  wishlistListUnits,
+  WISHLIST_LIST_MAX_UNITS,
+} from '@/features/wishlist/data'
 import { addCardsToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
 import { useCustomCollections } from './hooks'
 import { addCardsToCollection, createCustomCollection, removeCardsFromCollection } from './data'
@@ -74,16 +80,19 @@ export function BulkAssignBar({
   onDone,
   onCancel,
   removeFromCollectionId,
+  removeFromWishlistListId,
 }: {
   selectedIds: Set<number>
   onDone: (msg: string) => void
   onCancel: () => void
   removeFromCollectionId?: number
+  removeFromWishlistListId?: number
 }) {
   const t = useT()
   const collections = useCustomCollections()
   const tradeLists = useLiveQuery(() => db.tradeLists.where('kind').equals('own').toArray()) ?? []
-  const [panel, setPanel] = useState<'collections' | 'trades' | null>(null)
+  const wishlistLists = useLiveQuery(() => db.wishlistLists.where('kind').equals('own').toArray()) ?? []
+  const [panel, setPanel] = useState<'collections' | 'trades' | 'wishlists' | null>(null)
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [color, setColor] = useState<CustomCollectionColor>('federation')
@@ -91,7 +100,7 @@ export function BulkAssignBar({
   const ids = [...selectedIds]
   const n = selectedIds.size
   const none = n === 0
-  const togglePanel = (p: 'collections' | 'trades') => setPanel(panel === p ? null : p)
+  const togglePanel = (p: 'collections' | 'trades' | 'wishlists') => setPanel(panel === p ? null : p)
 
   const markOwned = async () => {
     const done = await addCardsToOwned(ids)
@@ -106,15 +115,21 @@ export function BulkAssignBar({
     )
   }
 
-  const addWishlist = async () => {
-    const done = await addCardsToWishlist(ids)
-    onDone(done > 0 ? t('bulk.resultAddedWishlist', { n: done }) : t('bulk.resultAllInWishlist'))
+  const assignWishlistList = async (listId: number) => {
+    const { added, skipped } = await addCardsToWishlistList(listId, ids)
+    onDone(
+      skipped > 0
+        ? t('bulk.resultWishlistPartial', { added, skipped, max: WISHLIST_LIST_MAX_UNITS })
+        : t('bulk.resultAddedWishlist', { n: added }),
+    )
+    setPanel(null)
   }
 
-  const removeWishlist = async () => {
+  const removeFromWishlist = async () => {
+    if (removeFromWishlistListId == null) return
     if (!window.confirm(t('bulk.confirmRemoveWishlist', { n }))) return
-    const done = await removeCardsFromWishlist(ids)
-    onDone(done > 0 ? t('bulk.resultRemovedWishlist', { n: done }) : t('bulk.resultNoneInWishlist'))
+    await removeCardsFromWishlistList(removeFromWishlistListId, ids)
+    onDone(t('bulk.resultRemovedWishlist', { n }))
   }
 
   const assignCollection = async (collectionId: number) => {
@@ -203,6 +218,38 @@ export function BulkAssignBar({
           </div>
         )}
 
+        {panel === 'wishlists' && (
+          <div className="absolute bottom-full left-0 mb-2 max-h-64 w-full overflow-y-auto rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
+            {wishlistLists.map((l) => {
+              const units = wishlistListUnits(l)
+              const full = units >= WISHLIST_LIST_MAX_UNITS
+              return (
+                <button
+                  key={l.id}
+                  onClick={() => assignWishlistList(l.id!)}
+                  disabled={full}
+                  className="flex w-full items-center justify-between gap-2 rounded-lg px-3 py-2 text-left text-sm hover:bg-hangar-700 disabled:pointer-events-none disabled:opacity-40"
+                >
+                  <span className="truncate">{l.name}</span>
+                  <span className="shrink-0 font-display text-xs text-hangar-300">
+                    {units}/{WISHLIST_LIST_MAX_UNITS}
+                  </span>
+                </button>
+              )
+            })}
+            <button
+              onClick={async () => {
+                const id = await createWishlistList(`Lista ${wishlistLists.length + 1}`)
+                await assignWishlistList(id)
+              }}
+              className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+            >
+              <Plus size={14} />
+              {t('bulk.newList')}
+            </button>
+          </div>
+        )}
+
         {panel === 'trades' && (
           <div className="absolute bottom-full left-0 mb-2 max-h-64 w-full overflow-y-auto rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
             {tradeLists.map((l) => {
@@ -255,8 +302,22 @@ export function BulkAssignBar({
           </Section>
 
           <Section title={t('bulk.sectionWishlist')}>
-            <ActionButton Icon={Star} label={t('common.add')} disabled={none} onClick={addWishlist} />
-            <ActionButton Icon={StarOff} label={t('common.remove')} danger disabled={none} onClick={removeWishlist} />
+            <ActionButton
+              Icon={Star}
+              label={t('bulk.addToWishlist')}
+              wide={removeFromWishlistListId == null}
+              disabled={none}
+              onClick={() => togglePanel('wishlists')}
+            />
+            {removeFromWishlistListId != null && (
+              <ActionButton
+                Icon={StarOff}
+                label={t('bulk.removeFromThis')}
+                danger
+                disabled={none}
+                onClick={removeFromWishlist}
+              />
+            )}
           </Section>
 
           <Section title={t('bulk.sectionCollections')}>
