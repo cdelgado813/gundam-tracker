@@ -158,13 +158,12 @@ export function CustomCollectionDetailPage() {
       </div>
 
       {selecting && (
+        // La selección se mantiene tras cada acción: puede querer marcar en propiedad
+        // Y quitar de la colección sobre la misma tanda sin volver a seleccionar.
         <BulkAssignBar
           selectedIds={selectedIds}
           removeFromCollectionId={collectionId}
-          onDone={(msg) => {
-            setToast(msg)
-            stopSelecting()
-          }}
+          onDone={setToast}
           onCancel={stopSelecting}
         />
       )}

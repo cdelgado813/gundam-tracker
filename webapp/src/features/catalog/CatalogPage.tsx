@@ -309,14 +309,9 @@ export function CatalogPage() {
       )}
 
       {selecting && (
-        <BulkAssignBar
-          selectedIds={selectedIds}
-          onDone={(msg) => {
-            setToast(msg)
-            stopSelecting()
-          }}
-          onCancel={stopSelecting}
-        />
+        // La selección se mantiene tras cada acción: puede querer marcar en propiedad
+        // Y añadir a colección sobre la misma tanda sin volver a seleccionar.
+        <BulkAssignBar selectedIds={selectedIds} onDone={setToast} onCancel={stopSelecting} />
       )}
       {toast && (
         <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-hangar-700 px-4 py-2 text-sm shadow-xl">
