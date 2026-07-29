@@ -6,6 +6,7 @@
 
 - [x] 2.1 `BulkAssignBar`: cabecera «N cartas seleccionadas» + cierre; cuadrícula de acciones icono+etiqueta agrupadas por eje (propiedad | colecciones); desplegable de colecciones como panel superior
 - [x] 2.2 Acción «−1 de propiedad» con confirmación y recuento en todos los contextos; «Quitar de esta colección» mantiene su confirmación
+- [x] 2.3 Completar los ejes restantes: wishlist (añadir/quitar en bloque) e intercambio (añadir a lista de trade con selector N/50 y corte en el límite); secciones etiquetadas por eje
 
 ## 3. Búsqueda y filtro reutilizables
 

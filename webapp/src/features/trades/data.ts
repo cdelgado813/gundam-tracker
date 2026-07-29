@@ -41,6 +41,32 @@ export async function addToTradeList(
   })
 }
 
+/**
+ * Añade una unidad de cada carta a la lista, respetando el límite duro de 50.
+ * Devuelve cuántas entraron y cuántas se quedaron fuera por falta de hueco.
+ */
+export async function addCardsToTradeList(
+  listId: number,
+  cardIds: number[],
+): Promise<{ added: number; skipped: number }> {
+  return db.transaction('rw', db.tradeLists, async () => {
+    const list = await db.tradeLists.get(listId)
+    if (!list || list.kind !== 'own') return { added: 0, skipped: cardIds.length }
+    let room = TRADE_LIST_MAX_UNITS - tradeListUnits(list)
+    let added = 0
+    for (const cardId of cardIds) {
+      if (room <= 0) break
+      const existing = list.items.find((i) => i.cardId === cardId && i.condition === undefined)
+      if (existing) existing.quantity += 1
+      else list.items.push({ cardId, quantity: 1 })
+      room--
+      added++
+    }
+    if (added > 0) await db.tradeLists.update(listId, { items: list.items, updatedAt: Date.now() })
+    return { added, skipped: cardIds.length - added }
+  })
+}
+
 export async function removeFromTradeList(listId: number, cardId: number, condition?: CardCondition) {
   await db.transaction('rw', db.tradeLists, async () => {
     const list = await db.tradeLists.get(listId)
