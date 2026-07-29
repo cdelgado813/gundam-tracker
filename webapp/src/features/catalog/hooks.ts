@@ -22,3 +22,15 @@ export function useWishlistSet(): Set<number> {
     }) ?? new Set()
   )
 }
+
+/** Set de cardIds presentes en alguna lista de intercambio propia (reactivo). */
+export function useTradeListSet(): Set<number> {
+  return (
+    useLiveQuery(async () => {
+      const lists = await db.tradeLists.where('kind').equals('own').toArray()
+      const ids = new Set<number>()
+      for (const list of lists) for (const item of list.items) ids.add(item.cardId)
+      return ids
+    }) ?? new Set()
+  )
+}

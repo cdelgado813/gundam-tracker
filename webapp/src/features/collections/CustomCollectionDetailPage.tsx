@@ -5,7 +5,7 @@ import { ArrowLeft, ListChecks, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
-import { useOwnedMap, useWishlistSet } from '@/features/catalog/hooks'
+import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
 import { BulkAssignBar } from './BulkAssignBar'
@@ -31,6 +31,7 @@ export function CustomCollectionDetailPage() {
     }, [collectionId]) ?? []
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const trades = useTradeListSet()
   const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
@@ -154,6 +155,7 @@ export function CustomCollectionDetailPage() {
             card={c}
             ownedCount={owned.get(c.id)}
             wishlisted={wishlist.has(c.id)}
+            inTradeList={trades.has(c.id)}
             dimIfMissing
             selectionMode={selecting}
             selected={selectedIds.has(c.id)}

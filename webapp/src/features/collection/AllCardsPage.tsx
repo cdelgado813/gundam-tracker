@@ -5,7 +5,7 @@ import { ArrowLeft, ListChecks, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
-import { useOwnedMap, useWishlistSet } from '@/features/catalog/hooks'
+import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
 /** Todas las cartas poseídas en un único grid (design D4). */
@@ -15,6 +15,7 @@ export function AllCardsPage() {
   const [toast, setToast] = useState<string | null>(null)
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const trades = useTradeListSet()
   const cards =
     useLiveQuery(async () => {
       const entries = await db.collection.toArray()
@@ -107,6 +108,7 @@ export function AllCardsPage() {
               card={c}
               ownedCount={owned.get(c.id)}
               wishlisted={wishlist.has(c.id)}
+              inTradeList={trades.has(c.id)}
               dimIfMissing
               selectionMode={selecting}
               selected={selectedIds.has(c.id)}

@@ -5,7 +5,7 @@ import { ArrowLeft, ListChecks, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
-import { useOwnedMap, useWishlistSet } from './hooks'
+import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
 export function ExpansionPage() {
@@ -27,6 +27,7 @@ export function ExpansionPage() {
     ) ?? []
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const trades = useTradeListSet()
   const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
@@ -132,6 +133,7 @@ export function ExpansionPage() {
             card={c}
             ownedCount={owned.get(c.id)}
             wishlisted={wishlist.has(c.id)}
+            inTradeList={trades.has(c.id)}
             dimIfMissing={dimMissing}
             selectionMode={selecting}
             selected={selectedIds.has(c.id)}

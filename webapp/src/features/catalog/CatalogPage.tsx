@@ -4,7 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Bell, CloudDownload, ListChecks, Search, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useCatalogSync } from './sync'
-import { useOwnedMap, useWishlistSet } from './hooks'
+import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { RarityFilterChips } from './RarityFilterChips'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 import { CardTile } from '@/ui/CardTile'
@@ -100,6 +100,7 @@ function CardResults({
 }) {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
+  const trades = useTradeListSet()
   const MAX_RESULTS = 300
   const allMatches =
     useLiveQuery(async () => {
@@ -160,6 +161,7 @@ function CardResults({
             card={c}
             ownedCount={owned.get(c.id)}
             wishlisted={wishlist.has(c.id)}
+            inTradeList={trades.has(c.id)}
             selectionMode={selecting}
             selected={selectedIds.has(c.id)}
             onToggleSelect={onToggleSelect}
