@@ -7,8 +7,10 @@ import { db } from '@/lib/db'
 import { removeFromTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from './data'
 import { shareUrlFor, encodeTradeList, MAX_SHARE_URL_LENGTH } from './share'
 import { Button } from '@/ui/Button'
+import { useT } from '@/lib/useT'
 
 export function TradeListPage() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const listId = Number(id)
@@ -29,8 +31,8 @@ export function TradeListPage() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   if (!list) return null
@@ -43,7 +45,7 @@ export function TradeListPage() {
       return
     }
     await navigator.clipboard.writeText(shareUrl)
-    setToast('Enlace copiado')
+    setToast(t('trades.linkCopied'))
   }
 
   const showQr = async () => {
@@ -65,7 +67,7 @@ export function TradeListPage() {
   return (
     <div className="mx-auto max-w-3xl p-4">
       <Link to="/trades" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
-        <ArrowLeft size={14} /> Trades
+        <ArrowLeft size={14} /> {t('nav.trades')}
       </Link>
       <header className="mb-4 mt-1">
         <div className="flex items-center justify-between">
@@ -78,28 +80,28 @@ export function TradeListPage() {
           <div className="mt-3 flex flex-wrap gap-2">
             <Button onClick={copyLink} className="gap-1.5">
               <Link2 size={14} />
-              Copiar enlace
+              {t('trades.copyLink')}
             </Button>
             <Button variant="secondary" onClick={showQr} className="gap-1.5">
               <QrCode size={14} />
-              QR
+              {t('trades.qr')}
             </Button>
             <Button variant="secondary" onClick={exportFile} className="gap-1.5">
               <Download size={14} />
-              Exportar fichero
+              {t('trades.exportFile')}
             </Button>
             <Button
               variant="danger"
               className="gap-1.5"
               onClick={async () => {
-                if (window.confirm('¿Eliminar esta lista?')) {
+                if (window.confirm(t('trades.deleteConfirm'))) {
                   await db.tradeLists.delete(listId)
                   navigate('/trades')
                 }
               }}
             >
               <Trash2 size={14} />
-              Eliminar
+              {t('common.delete')}
             </Button>
           </div>
         )}
@@ -107,13 +109,13 @@ export function TradeListPage() {
 
       {urlTooLong && (
         <p className="mb-3 rounded-xl bg-haro-400/10 px-3 py-2 text-sm text-haro-400">
-          La lista es demasiado grande para un enlace. Usa el QR o «Exportar fichero».
+          {t('trades.tooLong')}
         </p>
       )}
 
       {list.items.length === 0 ? (
         <p className="py-10 text-center text-sm text-hangar-300">
-          Lista vacía. Añade cartas desde el detalle de cualquier carta que tengas.
+          {t('trades.listEmpty')}
         </p>
       ) : (
         <ul className="flex flex-col gap-2">
@@ -136,12 +138,12 @@ export function TradeListPage() {
                   <p className="text-xs text-hangar-300">
                     ×{item.quantity}
                     {item.condition ? ` · ${item.condition}` : ''}
-                    {card ? ` · ${card.collectorNumber}` : ' · carta no sincronizada'}
+                    {card ? ` · ${card.collectorNumber}` : ` · ${t('trades.unsyncedCard')}`}
                   </p>
                 </div>
                 {list.kind === 'own' && (
                   <button
-                    aria-label="Quitar"
+                    aria-label={t('common.remove')}
                     className="shrink-0 rounded-lg px-2 py-1 text-hangar-300 hover:bg-hangar-800 hover:text-zeon-400"
                     onClick={() => removeFromTradeList(listId, item.cardId, item.condition)}
                   >
@@ -160,7 +162,7 @@ export function TradeListPage() {
           onClick={() => setQr(null)}
         >
           <div className="rounded-2xl bg-white p-4">
-            <img src={qr} alt="QR de la lista" className="h-72 w-72" />
+            <img src={qr} alt={t('trades.qrAlt')} className="h-72 w-72" />
           </div>
         </div>
       )}

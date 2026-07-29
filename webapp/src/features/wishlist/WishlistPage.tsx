@@ -4,6 +4,7 @@ import { useLiveQuery } from 'dexie-react-hooks'
 import { Star } from 'lucide-react'
 import { db, type Card, type WishlistEntry } from '@/lib/db'
 import { useCardFilter } from '@/ui/CardListControls'
+import { useT } from '@/lib/useT'
 import { formatCents } from '@/features/catalog/prices'
 
 type SortKey = 'name' | 'expansion' | 'price'
@@ -34,6 +35,7 @@ function useWishlistData(): WishlistItem[] | undefined {
 }
 
 export function WishlistPage() {
+  const t = useT()
   const [sort, setSort] = useState<SortKey>('name')
   const data = useWishlistData()
   const cards = useMemo(() => (data ?? []).map((x) => x.card), [data])
@@ -56,28 +58,28 @@ export function WishlistPage() {
   return (
     <div className="mx-auto max-w-3xl p-4">
       <header className="mb-4 flex items-center justify-between">
-        <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">WISHLIST</h1>
+        <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">{t('wishlist.title')}</h1>
         <select
           value={sort}
           onChange={(e) => setSort(e.target.value as SortKey)}
           className="rounded-lg border border-hangar-700 bg-hangar-800 px-2 py-1.5 text-sm"
         >
-          <option value="name">Por nombre</option>
-          <option value="expansion">Por expansión</option>
-          <option value="price">Por precio</option>
+          <option value="name">{t('wishlist.sortName')}</option>
+          <option value="expansion">{t('wishlist.sortExpansion')}</option>
+          <option value="price">{t('wishlist.sortPrice')}</option>
         </select>
       </header>
 
       {data.length > 0 && (
         <div className="mb-4 rounded-xl border border-hangar-800 bg-hangar-900 p-4">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-hangar-300">Coste estimado</span>
+            <span className="text-sm text-hangar-300">{t('wishlist.estimatedCost')}</span>
             <span className="font-display text-xl font-bold text-haro-400">
               {formatCents(totalCents)}
             </span>
           </div>
           <p className="mt-1 text-right text-xs text-hangar-300">
-            basado en {priced.length} de {data.length} cartas con precio
+            {t('wishlist.basis', { n: priced.length, m: data.length })}
           </p>
         </div>
       )}
@@ -88,11 +90,7 @@ export function WishlistPage() {
         <div className="py-16 text-center">
           <Star size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
           <p className="mt-3 text-sm text-hangar-300">
-            Tu wishlist está vacía. Marca cartas desde el{' '}
-            <Link to="/" className="text-federation-400 underline">
-              catálogo
-            </Link>
-            .
+            {t('wishlist.empty')}
           </p>
         </div>
       ) : (

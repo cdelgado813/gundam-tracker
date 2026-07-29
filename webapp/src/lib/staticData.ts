@@ -51,6 +51,8 @@ export interface StaticPriceEntry {
   minNearMintCents: number | null
   currency: string
   offersCount: number
+  /** Desglose por idioma de carta; ausente en datos publicados antes del desglose. */
+  byLanguage?: Record<string, { minCents: number; offersCount: number }>
   fetchedAt: number
 }
 

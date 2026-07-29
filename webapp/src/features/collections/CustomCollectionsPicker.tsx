@@ -5,6 +5,7 @@ import { Button } from '@/ui/Button'
 import { useCardCollectionIds, useCustomCollections } from './hooks'
 import { createCustomCollection, toggleCardInCollection } from './data'
 import { collectionColorClasses } from './colors'
+import { useT } from '@/lib/useT'
 
 function ColorPicker({
   value,
@@ -32,6 +33,7 @@ function ColorPicker({
 
 /** Chips togglables de colecciones + creación inline, para asignar una carta desde su detalle. */
 export function CustomCollectionsPicker({ cardId }: { cardId: number }) {
+  const t = useT()
   const collections = useCustomCollections()
   const memberOf = useCardCollectionIds(cardId)
   const [creating, setCreating] = useState(false)
@@ -48,7 +50,7 @@ export function CustomCollectionsPicker({ cardId }: { cardId: number }) {
 
   return (
     <div className="rounded-xl border border-hangar-800 bg-hangar-900 p-4">
-      <h3 className="mb-3 font-display text-sm font-bold text-hangar-100">Colecciones</h3>
+      <h3 className="mb-3 font-display text-sm font-bold text-hangar-100">{t('card.collections')}</h3>
       <div className="flex flex-wrap gap-1.5">
         {collections.map((c) => {
           const on = memberOf.has(c.id!)
@@ -74,7 +76,7 @@ export function CustomCollectionsPicker({ cardId }: { cardId: number }) {
             className="inline-flex items-center gap-1 rounded-full border border-dashed border-hangar-700 px-2.5 py-1 text-xs text-hangar-300 hover:border-hangar-600 hover:text-hangar-100"
           >
             <Plus size={12} />
-            Nueva
+            {t('card.newCollection')}
           </button>
         )}
       </div>
@@ -85,18 +87,18 @@ export function CustomCollectionsPicker({ cardId }: { cardId: number }) {
             autoFocus
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="Nombre (p. ej. Unit, Favoritas…)"
+            placeholder={t('card.collectionNamePlaceholder')}
             className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
           />
           <div className="flex items-center justify-between">
             <ColorPicker value={color} onChange={setColor} />
             <div className="flex gap-2">
               <Button variant="ghost" onClick={() => setCreating(false)}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
               <Button onClick={submitNew} className="gap-1.5">
                 <FolderPlus size={14} />
-                Crear
+                {t('common.create')}
               </Button>
             </div>
           </div>

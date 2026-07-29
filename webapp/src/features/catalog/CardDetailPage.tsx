@@ -7,7 +7,8 @@ import { addToCollection, setEntryQuantity } from '@/features/collection/data'
 import { toggleWishlist } from '@/features/wishlist/data'
 import { addToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
 import { CustomCollectionsPicker } from '@/features/collections/CustomCollectionsPicker'
-import { cardTraderUrl, formatCents, getPrice, priceAge } from './prices'
+import { cardTraderUrl, formatCents, getPrice, languagePrices, priceAge } from './prices'
+import { useT } from '@/lib/useT'
 import { Button } from '@/ui/Button'
 
 const CONDITIONS: CardCondition[] = [
@@ -21,6 +22,7 @@ const CONDITIONS: CardCondition[] = [
 const LANGUAGES: CardLanguage[] = ['en', 'jp', 'zh-CN']
 
 function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansionId: number }) {
+  const t = useT()
   const [condition, setCondition] = useState<CardCondition>('Near Mint')
   const [language, setLanguage] = useState<CardLanguage>('en')
   const [qty, setQty] = useState(1)
@@ -28,7 +30,7 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
 
   return (
     <div className="rounded-xl border border-hangar-800 bg-hangar-900 p-4">
-      <h3 className="mb-3 font-display text-sm font-bold text-hangar-100">Añadir a colección</h3>
+      <h3 className="mb-3 font-display text-sm font-bold text-hangar-100">{t('card.addToCollection')}</h3>
       <div className="flex flex-wrap gap-2">
         <select
           value={condition}
@@ -65,13 +67,13 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
             setTimeout(() => setAdded(false), 1500)
             // Spec wishlist: si estaba deseada, ofrecer retirarla al conseguirla
             const wl = await db.wishlist.where('cardId').equals(cardId).first()
-            if (wl?.id != null && window.confirm('Esta carta estaba en tu wishlist. ¿La quitamos?')) {
+            if (wl?.id != null && window.confirm(t('card.wishlistRemoveConfirm'))) {
               await db.wishlist.delete(wl.id)
             }
           }}
         >
           {added && <Check size={14} />}
-          {added ? 'Añadida' : 'Añadir'}
+          {added ? t('card.added') : t('common.add')}
         </Button>
       </div>
     </div>
@@ -79,11 +81,12 @@ function AddToCollectionForm({ cardId, expansionId }: { cardId: number; expansio
 }
 
 function OwnedEntries({ cardId }: { cardId: number }) {
+  const t = useT()
   const entries = useLiveQuery(() => db.collection.where('cardId').equals(cardId).toArray(), [cardId]) ?? []
   if (entries.length === 0) return null
   return (
     <div className="rounded-xl border border-newtype-400/20 bg-newtype-400/5 p-4">
-      <h3 className="mb-2 font-display text-sm font-bold text-newtype-400">En tu colección</h3>
+      <h3 className="mb-2 font-display text-sm font-bold text-newtype-400">{t('card.inYourCollection')}</h3>
       <ul className="flex flex-col gap-2">
         {entries.map((e) => (
           <li key={e.id} className="flex items-center justify-between text-sm">
@@ -113,12 +116,13 @@ function OwnedEntries({ cardId }: { cardId: number }) {
 }
 
 function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: string) => void }) {
+  const t = useT()
   const lists = useLiveQuery(() => db.tradeLists.where('kind').equals('own').toArray()) ?? []
   const [open, setOpen] = useState(false)
 
   const add = async (listId: number) => {
     const added = await addToTradeList(listId, cardId, 1)
-    onDone(added > 0 ? 'Añadida a la lista' : 'La lista está llena (máx. 50)')
+    onDone(added > 0 ? t('card.addedToList') : t('card.listFull', { max: TRADE_LIST_MAX_UNITS }))
     setOpen(false)
   }
 
@@ -126,7 +130,7 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
     <div className="relative">
       <Button variant="secondary" onClick={() => setOpen(!open)} className="gap-1.5">
         <Repeat size={14} />
-        A lista de trade
+        {t('card.toTradeList')}
       </Button>
       {open && (
         <div className="absolute bottom-full left-0 z-10 mb-2 w-56 rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
@@ -151,7 +155,7 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
             className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
           >
             <Plus size={14} />
-            Nueva lista
+            {t('card.newList')}
           </button>
         </div>
       )}
@@ -160,6 +164,7 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
 }
 
 export function CardDetailPage() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const cardId = Number(id)
@@ -172,6 +177,13 @@ export function CardDetailPage() {
     useLiveQuery(async () => (await db.wishlist.where('cardId').equals(cardId).count()) > 0, [cardId]) ??
     false
   const [price, setPrice] = useState<PriceCache | null>(null)
+  const byLanguage = languagePrices(price ?? undefined)
+  // Idiomas de los que el usuario tiene copias, para resaltar su fila de precio.
+  const ownedLanguages =
+    useLiveQuery(async () => {
+      const entries = await db.collection.where('cardId').equals(cardId).toArray()
+      return new Set(entries.map((e) => e.language))
+    }, [cardId]) ?? new Set<CardLanguage>()
   const [toast, setToast] = useState<string | null>(null)
 
   useEffect(() => {
@@ -180,14 +192,14 @@ export function CardDetailPage() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   if (!card)
     return (
       <div className="flex h-full items-center justify-center text-hangar-300">
-        Carta no encontrada en el catálogo local.
+        {t('card.notFound')}
       </div>
     )
 
@@ -203,7 +215,7 @@ export function CardDetailPage() {
         }}
         className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
       >
-        <ArrowLeft size={14} /> Volver
+        <ArrowLeft size={14} /> {t('common.back')}
       </button>
 
       <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-start">
@@ -232,15 +244,40 @@ export function CardDetailPage() {
 
           <div className="rounded-xl border border-hangar-800 bg-hangar-900 p-4">
             <div className="flex items-baseline justify-between">
-              <span className="text-sm text-hangar-300">Precio mínimo (marketplace)</span>
+              <span className="text-sm text-hangar-300">{t('card.minPrice')}</span>
               <span className="font-display text-xl font-bold text-haro-400">
                 {formatCents(price?.minCents, price?.currency)}
               </span>
             </div>
             {price && (
               <p className="mt-1 text-right text-xs text-hangar-300">
-                {price.offersCount} ofertas · {priceAge(price.fetchedAt)}
+                {t('card.offersAge', {
+                  n: price.offersCount,
+                  age: t(priceAge(price.fetchedAt).key, { n: priceAge(price.fetchedAt).n }),
+                })}
               </p>
+            )}
+            {byLanguage.length > 0 && (
+              <div className="mt-3 border-t border-hangar-800 pt-3">
+                <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-widest text-hangar-300">
+                  {t('card.priceByLanguage')}
+                </p>
+                <ul className="flex flex-col gap-1">
+                  {byLanguage.map(([lang, value]) => (
+                    <li
+                      key={lang}
+                      className={`flex items-baseline justify-between text-sm ${
+                        ownedLanguages.has(lang) ? 'text-newtype-400' : 'text-hangar-300'
+                      }`}
+                    >
+                      <span className="font-mono text-xs uppercase">{lang}</span>
+                      <span className="font-display">
+                        {formatCents(value.minCents, price?.currency)}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
             )}
             <a
               href={cardTraderUrl(cardId)}
@@ -248,7 +285,7 @@ export function CardDetailPage() {
               rel="noreferrer"
               className="mt-3 flex items-center justify-center gap-1.5 rounded-lg border border-hangar-700 py-2 text-sm text-federation-400 transition hover:bg-hangar-800"
             >
-              Ver en CardTrader
+              {t('card.viewOnCardTrader')}
               <ExternalLink size={13} />
             </a>
           </div>
@@ -259,11 +296,11 @@ export function CardDetailPage() {
               className="gap-1.5"
               onClick={async () => {
                 const on = await toggleWishlist(cardId, card.expansionId)
-                setToast(on ? 'Añadida a wishlist' : 'Quitada de wishlist')
+                setToast(on ? t('card.addedToWishlist') : t('card.removedFromWishlist'))
               }}
             >
               <Star size={14} fill={wishlisted ? 'currentColor' : 'none'} />
-              {wishlisted ? 'En wishlist' : 'Wishlist'}
+              {wishlisted ? t('card.inWishlist') : t('nav.wishlist')}
             </Button>
             <TradeListPicker cardId={cardId} onDone={setToast} />
           </div>

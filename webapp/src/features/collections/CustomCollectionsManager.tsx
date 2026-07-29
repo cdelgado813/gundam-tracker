@@ -5,8 +5,10 @@ import { CUSTOM_COLLECTION_COLORS, type CustomCollection } from '@/lib/db'
 import { deleteCustomCollection, recolorCustomCollection, renameCustomCollection } from './data'
 import { useCustomCollections } from './hooks'
 import { collectionColorClasses } from './colors'
+import { useT } from '@/lib/useT'
 
 function EditableRow({ collection }: { collection: CustomCollection }) {
+  const t = useT()
   const [editing, setEditing] = useState(false)
   const [name, setName] = useState(collection.name)
 
@@ -51,16 +53,16 @@ function EditableRow({ collection }: { collection: CustomCollection }) {
       )}
 
       <button
-        aria-label="Renombrar"
+        aria-label={t('customCollection.rename')}
         onClick={() => (editing ? save() : setEditing(true))}
         className="shrink-0 rounded p-1 text-hangar-300 hover:bg-hangar-700 hover:text-hangar-100"
       >
         {editing ? <Check size={14} /> : <Pencil size={14} />}
       </button>
       <button
-        aria-label="Eliminar colección"
+        aria-label={t('customCollection.deleteLabel')}
         onClick={() => {
-          if (window.confirm(`¿Eliminar la colección "${collection.name}"?`)) {
+          if (window.confirm(t('customCollection.deleteConfirm', { name: collection.name }))) {
             void deleteCustomCollection(collection.id!)
           }
         }}
@@ -74,12 +76,13 @@ function EditableRow({ collection }: { collection: CustomCollection }) {
 
 /** Gestión de colecciones personalizadas ya creadas: renombrar, recolorear, eliminar. */
 export function CustomCollectionsManager() {
+  const t = useT()
   const collections = useCustomCollections()
 
   if (collections.length === 0) {
     return (
       <p className="text-xs text-hangar-300">
-        Aún no tienes colecciones personalizadas. Créalas desde el detalle de cualquier carta.
+        {t('customCollection.none')}
       </p>
     )
   }

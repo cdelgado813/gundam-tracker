@@ -39,12 +39,19 @@ export interface Card {
   searchName: string
 }
 
+export interface LanguagePrice {
+  minCents: number
+  offersCount: number
+}
+
 export interface PriceCache {
   blueprintId: number
   minCents: number | null
   minNearMintCents: number | null
   currency: string
   offersCount: number
+  /** Desglose por idioma de carta; ausente en precios cacheados antes del desglose. */
+  byLanguage?: Partial<Record<CardLanguage, LanguagePrice>>
   fetchedAt: number
 }
 
@@ -147,6 +154,9 @@ export class GundamDB extends Dexie {
       customCollections: '++id, name',
       customCollectionCards: '++id, collectionId, cardId, [collectionId+cardId]',
     })
+    // v3: `prices.byLanguage` (campo nuevo, sin índice ni migración: los registros
+    // antiguos quedan sin desglose hasta el siguiente refresco)
+    this.version(3).stores({})
   }
 }
 

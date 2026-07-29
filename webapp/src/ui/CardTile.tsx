@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { Check, ImageOff, Package, Plus, Repeat, Star } from 'lucide-react'
 import type { Card } from '@/lib/db'
+import { useT } from '@/lib/useT'
 import { addToCollection } from '@/features/collection/data'
 
 /** Marcador de estado de la carta (en propiedad, deseada, en intercambio). */
@@ -56,6 +57,7 @@ export function CardTile({
   selected?: boolean
   onToggleSelect?: (cardId: number) => void
 }) {
+  const t = useT()
   const owned = ownedCount != null && ownedCount > 0
   const missing = dimIfMissing && !(ownedCount && ownedCount > 0)
   // La atenuación va sobre imagen y texto, no sobre el contenedor: el botón +1
@@ -79,7 +81,7 @@ export function CardTile({
         )}
         {dimIfMissing && !selectionMode && (
           <button
-            aria-label="Añadir una copia"
+            aria-label={t('card.addCopy')}
             onClick={(e) => {
               // Alta rápida (design D3): no navegar al detalle; el contador ×N da el feedback.
               e.preventDefault()

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react'
 import { Search } from 'lucide-react'
 import type { Card } from '@/lib/db'
+import { useT } from '@/lib/useT'
 
 /**
  * Búsqueda + filtro de rareza sobre una lista ya cargada (design D3): filtra en
@@ -8,6 +9,7 @@ import type { Card } from '@/lib/db'
  * en la lista de esta vista.
  */
 export function useCardFilter(cards: Card[]) {
+  const t = useT()
   const [query, setQuery] = useState('')
   const [rarities, setRarities] = useState<Set<string>>(new Set())
 
@@ -43,7 +45,7 @@ export function useCardFilter(cards: Card[]) {
           type="search"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
-          placeholder="Buscar en esta lista…"
+          placeholder={t('common.searchInList')}
           className="w-full rounded-xl border border-hangar-700 bg-hangar-900 py-2 pl-9 pr-3 text-sm text-hangar-100 placeholder:text-hangar-300/50 focus:border-federation-400 focus:outline-none"
         />
       </div>

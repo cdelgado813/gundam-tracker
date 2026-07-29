@@ -19,6 +19,7 @@ import { addCardsToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UN
 import { useCustomCollections } from './hooks'
 import { addCardsToCollection, createCustomCollection, removeCardsFromCollection } from './data'
 import { collectionColorClasses } from './colors'
+import { useT } from '@/lib/useT'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -79,6 +80,7 @@ export function BulkAssignBar({
   onCancel: () => void
   removeFromCollectionId?: number
 }) {
+  const t = useT()
   const collections = useCustomCollections()
   const tradeLists = useLiveQuery(() => db.tradeLists.where('kind').equals('own').toArray()) ?? []
   const [panel, setPanel] = useState<'collections' | 'trades' | null>(null)
@@ -89,36 +91,35 @@ export function BulkAssignBar({
   const ids = [...selectedIds]
   const n = selectedIds.size
   const none = n === 0
-  const plural = n !== 1 ? 's' : ''
   const togglePanel = (p: 'collections' | 'trades') => setPanel(panel === p ? null : p)
 
   const markOwned = async () => {
     const done = await addCardsToOwned(ids)
-    onDone(`+1 copia en ${done} carta${done !== 1 ? 's' : ''}`)
+    onDone(t('bulk.resultAddedCopies', { n: done }))
   }
 
   const unmarkOwned = async () => {
-    if (!window.confirm(`¿Restar una copia de ${n} carta${plural}? Las que no tengas se omiten.`)) return
+    if (!window.confirm(t('bulk.confirmRemoveCopy', { n }))) return
     const done = await removeCardsFromOwned(ids)
     onDone(
-      done > 0 ? `−1 copia en ${done} carta${done !== 1 ? 's' : ''}` : 'Ninguna tenía copias',
+      done > 0 ? t('bulk.resultRemovedCopies', { n: done }) : t('bulk.resultNoneOwned'),
     )
   }
 
   const addWishlist = async () => {
     const done = await addCardsToWishlist(ids)
-    onDone(done > 0 ? `${done} añadida${done !== 1 ? 's' : ''} a wishlist` : 'Ya estaban todas en la wishlist')
+    onDone(done > 0 ? t('bulk.resultAddedWishlist', { n: done }) : t('bulk.resultAllInWishlist'))
   }
 
   const removeWishlist = async () => {
-    if (!window.confirm(`¿Quitar ${n} carta${plural} de la wishlist?`)) return
+    if (!window.confirm(t('bulk.confirmRemoveWishlist', { n }))) return
     const done = await removeCardsFromWishlist(ids)
-    onDone(done > 0 ? `${done} quitada${done !== 1 ? 's' : ''} de la wishlist` : 'Ninguna estaba en la wishlist')
+    onDone(done > 0 ? t('bulk.resultRemovedWishlist', { n: done }) : t('bulk.resultNoneInWishlist'))
   }
 
   const assignCollection = async (collectionId: number) => {
     const added = await addCardsToCollection(collectionId, ids)
-    onDone(added > 0 ? `${added} carta${added > 1 ? 's' : ''} añadidas` : 'Ya estaban todas en esa colección')
+    onDone(added > 0 ? t('bulk.resultAddedCollection', { n: added }) : t('bulk.resultAllInCollection'))
     setPanel(null)
   }
 
@@ -126,17 +127,17 @@ export function BulkAssignBar({
     const { added, skipped } = await addCardsToTradeList(listId, ids)
     onDone(
       skipped > 0
-        ? `${added} añadidas · ${skipped} no caben (máx. ${TRADE_LIST_MAX_UNITS})`
-        : `${added} carta${added !== 1 ? 's' : ''} añadidas a la lista`,
+        ? t('bulk.resultTradePartial', { added, skipped, max: TRADE_LIST_MAX_UNITS })
+        : t('bulk.resultAddedTrade', { n: added }),
     )
     setPanel(null)
   }
 
   const removeFromCollection = async () => {
     if (removeFromCollectionId == null) return
-    if (!window.confirm(`¿Quitar ${n} carta${plural} de esta colección? No afecta a tu propiedad.`)) return
+    if (!window.confirm(t('bulk.confirmRemoveCollection', { n }))) return
     await removeCardsFromCollection(removeFromCollectionId, ids)
-    onDone(`${n} carta${plural} quitadas de la colección`)
+    onDone(t('bulk.resultRemovedCollection', { n }))
   }
 
   const createAndAssign = async () => {
@@ -168,7 +169,7 @@ export function BulkAssignBar({
                   autoFocus
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Nombre…"
+                  placeholder={t('customCollection.namePlaceholder')}
                   className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
                 />
                 <div className="flex items-center justify-between">
@@ -186,7 +187,7 @@ export function BulkAssignBar({
                   </div>
                   <Button onClick={createAndAssign} className="gap-1.5">
                     <FolderPlus size={14} />
-                    Crear y añadir
+                    {t('customCollection.createAndAdd')}
                   </Button>
                 </div>
               </div>
@@ -196,7 +197,7 @@ export function BulkAssignBar({
                 className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
               >
                 <Plus size={14} />
-                Nueva colección
+                {t('bulk.newCollection')}
               </button>
             )}
           </div>
@@ -229,17 +230,17 @@ export function BulkAssignBar({
               className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
             >
               <Plus size={14} />
-              Nueva lista
+              {t('bulk.newList')}
             </button>
           </div>
         )}
 
         <div className="mb-3 flex items-center justify-between">
           <span className="font-display text-sm font-semibold text-hangar-100">
-            {n} carta{plural} seleccionada{plural}
+            {t('bulk.selected', { n })}
           </span>
           <button
-            aria-label="Salir del modo selección"
+            aria-label={t('bulk.exit')}
             onClick={onCancel}
             className="rounded-lg p-1.5 text-hangar-300 hover:bg-hangar-700 hover:text-hangar-100"
           >
@@ -248,20 +249,20 @@ export function BulkAssignBar({
         </div>
 
         <div className="flex max-h-[50vh] flex-col gap-3 overflow-y-auto">
-          <Section title="Propiedad">
-            <ActionButton Icon={PackagePlus} label="+1 copia" disabled={none} onClick={markOwned} />
-            <ActionButton Icon={PackageMinus} label="−1 copia" danger disabled={none} onClick={unmarkOwned} />
+          <Section title={t('bulk.sectionOwned')}>
+            <ActionButton Icon={PackagePlus} label={t('bulk.addCopy')} disabled={none} onClick={markOwned} />
+            <ActionButton Icon={PackageMinus} label={t('bulk.removeCopy')} danger disabled={none} onClick={unmarkOwned} />
           </Section>
 
-          <Section title="Wishlist">
-            <ActionButton Icon={Star} label="Añadir" disabled={none} onClick={addWishlist} />
-            <ActionButton Icon={StarOff} label="Quitar" danger disabled={none} onClick={removeWishlist} />
+          <Section title={t('bulk.sectionWishlist')}>
+            <ActionButton Icon={Star} label={t('common.add')} disabled={none} onClick={addWishlist} />
+            <ActionButton Icon={StarOff} label={t('common.remove')} danger disabled={none} onClick={removeWishlist} />
           </Section>
 
-          <Section title="Colecciones">
+          <Section title={t('bulk.sectionCollections')}>
             <ActionButton
               Icon={FolderPlus}
-              label="Añadir a colección"
+              label={t('bulk.addToCollection')}
               wide={removeFromCollectionId == null}
               disabled={none}
               onClick={() => togglePanel('collections')}
@@ -269,7 +270,7 @@ export function BulkAssignBar({
             {removeFromCollectionId != null && (
               <ActionButton
                 Icon={FolderMinus}
-                label="Quitar de esta"
+                label={t('bulk.removeFromThis')}
                 danger
                 disabled={none}
                 onClick={removeFromCollection}
@@ -277,10 +278,10 @@ export function BulkAssignBar({
             )}
           </Section>
 
-          <Section title="Intercambio">
+          <Section title={t('bulk.sectionTrade')}>
             <ActionButton
               Icon={Repeat}
-              label="Añadir a lista de trade"
+              label={t('bulk.addToTradeList')}
               wide
               disabled={none}
               onClick={() => togglePanel('trades')}

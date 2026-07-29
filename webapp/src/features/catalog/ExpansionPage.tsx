@@ -3,12 +3,14 @@ import { Link, useParams, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ListChecks, X } from 'lucide-react'
 import { db } from '@/lib/db'
+import { useT } from '@/lib/useT'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
 export function ExpansionPage() {
+  const t = useT()
   const { id } = useParams()
   const [searchParams] = useSearchParams()
   // Modo colección solo con ?from=collection (design D3 del change anterior):
@@ -32,8 +34,8 @@ export function ExpansionPage() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   const visible = onlyMissing ? filtered.filter((c) => !(owned.get(c.id) ?? 0)) : filtered
@@ -67,7 +69,7 @@ export function ExpansionPage() {
             to={dimMissing ? '/collection' : '/'}
             className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
           >
-            <ArrowLeft size={14} /> {dimMissing ? 'Colección' : 'Catálogo'}
+            <ArrowLeft size={14} /> {dimMissing ? t('nav.collection') : t('nav.catalog')}
           </Link>
           {cards.length > 0 &&
             (selecting ? (
@@ -76,13 +78,13 @@ export function ExpansionPage() {
                   onClick={toggleSelectAll}
                   className="text-sm text-federation-400 hover:underline"
                 >
-                  {allVisibleSelected ? 'Ninguna' : 'Todas'}
+                  {allVisibleSelected ? t('common.selectNone') : t('common.selectAll')}
                 </button>
                 <button
                   onClick={stopSelecting}
                   className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
                 >
-                  <X size={14} /> Cancelar
+                  <X size={14} /> {t('common.cancel')}
                 </button>
               </div>
             ) : (
@@ -90,7 +92,7 @@ export function ExpansionPage() {
                 onClick={() => setSelecting(true)}
                 className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
               >
-                <ListChecks size={14} /> Seleccionar
+                <ListChecks size={14} /> {t('common.select')}
               </button>
             ))}
         </div>
@@ -98,7 +100,7 @@ export function ExpansionPage() {
           {expansion?.name}
           {!dimMissing && cards.length > 0 && (
             <span className="ml-2 font-sans text-sm font-normal text-hangar-300">
-              {cards.length} cartas
+              {cards.length} {t('common.cards')}
             </span>
           )}
         </h1>
@@ -121,7 +123,7 @@ export function ExpansionPage() {
               onChange={(e) => setOnlyMissing(e.target.checked)}
               className="accent-zeon-500"
             />
-            Solo faltantes
+            {t('common.onlyMissing')}
           </label>
         )}
       </header>
@@ -142,9 +144,7 @@ export function ExpansionPage() {
         ))}
       </div>
       {cards.length === 0 && (
-        <p className="py-10 text-center text-sm text-hangar-300">
-          Esta expansión aún no está descargada. Vuelve al catálogo y pulsa «Descargar».
-        </p>
+        <p className="py-10 text-center text-sm text-hangar-300">{t('expansion.notDownloaded')}</p>
       )}
 
       {selecting && (

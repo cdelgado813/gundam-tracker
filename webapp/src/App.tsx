@@ -1,5 +1,8 @@
+import { useEffect } from 'react'
 import { HashRouter, NavLink, Route, Routes } from 'react-router-dom'
 import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
+import { useT, useSyncHtmlLang, useUiLanguage } from '@/lib/useT'
+import type { TranslationKey } from '@/lib/i18n'
 import { CatalogPage } from '@/features/catalog/CatalogPage'
 import { ExpansionPage } from '@/features/catalog/ExpansionPage'
 import { CardDetailPage } from '@/features/catalog/CardDetailPage'
@@ -17,15 +20,16 @@ import { installAutoBackup } from '@/features/backup/backup'
 
 installAutoBackup()
 
-const tabs = [
-  { to: '/', label: 'Catálogo', Icon: LayoutGrid },
-  { to: '/collection', label: 'Colección', Icon: Package },
-  { to: '/wishlist', label: 'Wishlist', Icon: Star },
-  { to: '/trades', label: 'Trades', Icon: Repeat },
-  { to: '/settings', label: 'Ajustes', Icon: Settings },
+const tabs: { to: string; labelKey: TranslationKey; Icon: typeof LayoutGrid }[] = [
+  { to: '/', labelKey: 'nav.catalog', Icon: LayoutGrid },
+  { to: '/collection', labelKey: 'nav.collection', Icon: Package },
+  { to: '/wishlist', labelKey: 'nav.wishlist', Icon: Star },
+  { to: '/trades', labelKey: 'nav.trades', Icon: Repeat },
+  { to: '/settings', labelKey: 'nav.settings', Icon: Settings },
 ]
 
 function Shell() {
+  const t = useT()
   return (
     <div className="flex h-full flex-col">
       <WelcomeBanner />
@@ -46,7 +50,7 @@ function Shell() {
       </main>
       <nav className="border-t border-hangar-800 bg-hangar-900/95 pb-[env(safe-area-inset-bottom)] backdrop-blur">
         <div className="mx-auto flex max-w-xl">
-          {tabs.map(({ to, label, Icon }) => (
+          {tabs.map(({ to, labelKey, Icon }) => (
             <NavLink
               key={to}
               to={to}
@@ -58,7 +62,7 @@ function Shell() {
               }
             >
               <Icon size={20} strokeWidth={1.75} />
-              {label}
+              {t(labelKey)}
             </NavLink>
           ))}
         </div>
@@ -68,6 +72,13 @@ function Shell() {
 }
 
 function App() {
+  const initLanguage = useUiLanguage((s) => s.init)
+  useSyncHtmlLang()
+
+  useEffect(() => {
+    void initLanguage()
+  }, [initLanguage])
+
   return (
     <HashRouter>
       <Routes>

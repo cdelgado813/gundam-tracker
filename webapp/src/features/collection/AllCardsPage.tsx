@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, ListChecks, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
+import { useT } from '@/lib/useT'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
@@ -10,6 +11,7 @@ import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
 /** Todas las cartas poseídas en un único grid (design D4). */
 export function AllCardsPage() {
+  const t = useT()
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
@@ -26,14 +28,17 @@ export function AllCardsPage() {
         .sort((a, b) => a.collectorNumber.localeCompare(b.collectorNumber))
     }) ?? []
   const { filtered, controls } = useCardFilter(cards)
+  // Denominador del progreso: el catálogo sincronizado localmente (design D2).
+  const catalogTotal = useLiveQuery(() => db.cards.count()) ?? 0
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   const totalCopies = [...owned.values()].reduce((s, n) => s + n, 0)
+  const pct = catalogTotal ? Math.round((cards.length / catalogTotal) * 100) : 0
 
   const toggleSelect = (cardId: number) => {
     setSelectedIds((prev) => {
@@ -62,7 +67,7 @@ export function AllCardsPage() {
             to="/collection"
             className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
           >
-            <ArrowLeft size={14} /> Colección
+            <ArrowLeft size={14} /> {t('nav.collection')}
           </Link>
           {cards.length > 0 &&
             (selecting ? (
@@ -71,13 +76,13 @@ export function AllCardsPage() {
                   onClick={toggleSelectAll}
                   className="text-sm text-federation-400 hover:underline"
                 >
-                  {allVisibleSelected ? 'Ninguna' : 'Todas'}
+                  {allVisibleSelected ? t('common.selectNone') : t('common.selectAll')}
                 </button>
                 <button
                   onClick={stopSelecting}
                   className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
                 >
-                  <X size={14} /> Cancelar
+                  <X size={14} /> {t('common.cancel')}
                 </button>
               </div>
             ) : (
@@ -85,21 +90,37 @@ export function AllCardsPage() {
                 onClick={() => setSelecting(true)}
                 className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
               >
-                <ListChecks size={14} /> Seleccionar
+                <ListChecks size={14} /> {t('common.select')}
               </button>
             ))}
         </div>
-        <h1 className="mt-1 font-display text-xl font-bold text-hangar-100">Todas las cartas</h1>
-        <p className="mt-0.5 text-sm text-hangar-300">
-          {cards.length} únicas · {totalCopies} copias
-        </p>
+        <h1 className="mt-1 font-display text-xl font-bold text-hangar-100">
+          {t('collection.allCards')}
+        </h1>
+        {cards.length > 0 && (
+          <>
+            <div className="mt-2 flex items-center gap-3">
+              <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-hangar-800">
+                <div
+                  className="h-full rounded-full bg-federation-400"
+                  style={{ width: `${pct}%` }}
+                />
+              </div>
+              <span className="font-display text-xs text-hangar-300">
+                {cards.length}/{catalogTotal} ({pct}%)
+              </span>
+            </div>
+            <p className="mt-1 text-sm text-hangar-300">
+              {t('common.unique_other', { n: cards.length })} ·{' '}
+              {t('common.copies_other', { n: totalCopies })}
+            </p>
+          </>
+        )}
         <div className="mt-3">{controls}</div>
       </header>
 
       {cards.length === 0 ? (
-        <p className="py-10 text-center text-sm text-hangar-300">
-          Aún no tienes cartas en propiedad.
-        </p>
+        <p className="py-10 text-center text-sm text-hangar-300">{t('collection.allEmpty')}</p>
       ) : (
         <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
           {filtered.map((c) => (

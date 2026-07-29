@@ -8,6 +8,7 @@ import { useCardFilter } from '@/ui/CardListControls'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
+import { useT } from '@/lib/useT'
 import { BulkAssignBar } from './BulkAssignBar'
 
 /**
@@ -15,6 +16,7 @@ import { BulkAssignBar } from './BulkAssignBar'
  * es cuántas de las cartas que ha añadido ya posee, igual que el progreso por expansión.
  */
 export function CustomCollectionDetailPage() {
+  const t = useT()
   const { id } = useParams()
   const navigate = useNavigate()
   const collectionId = Number(id)
@@ -36,8 +38,8 @@ export function CustomCollectionDetailPage() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   if (!collection) return null
@@ -71,7 +73,7 @@ export function CustomCollectionDetailPage() {
       <header className="mb-4">
         <div className="flex items-center justify-between">
           <Link to="/collection" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
-            <ArrowLeft size={14} /> Colección
+            <ArrowLeft size={14} /> {t('nav.collection')}
           </Link>
           {cards.length > 0 &&
             (selecting ? (
@@ -80,13 +82,13 @@ export function CustomCollectionDetailPage() {
                   onClick={toggleSelectAll}
                   className="text-sm text-federation-400 hover:underline"
                 >
-                  {allVisibleSelected ? 'Ninguna' : 'Todas'}
+                  {allVisibleSelected ? t('common.selectNone') : t('common.selectAll')}
                 </button>
                 <button
                   onClick={stopSelecting}
                   className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
                 >
-                  <X size={14} /> Cancelar
+                  <X size={14} /> {t('common.cancel')}
                 </button>
               </div>
             ) : (
@@ -94,7 +96,7 @@ export function CustomCollectionDetailPage() {
                 onClick={() => setSelecting(true)}
                 className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
               >
-                <ListChecks size={14} /> Seleccionar
+                <ListChecks size={14} /> {t('common.select')}
               </button>
             ))}
         </div>
@@ -104,9 +106,9 @@ export function CustomCollectionDetailPage() {
             {collection.name}
           </h1>
           <button
-            aria-label="Eliminar colección"
+            aria-label={t('customCollection.deleteLabel')}
             onClick={() => {
-              if (window.confirm(`¿Eliminar la colección "${collection.name}"?`)) {
+              if (window.confirm(t('customCollection.deleteConfirm', { name: collection.name }))) {
                 void deleteCustomCollection(collectionId)
                 navigate('/collection')
               }
@@ -128,7 +130,7 @@ export function CustomCollectionDetailPage() {
           </div>
         ) : (
           <p className="mt-2 text-sm text-hangar-300">
-            Aún no has añadido cartas. Hazlo desde el detalle de cualquier carta.
+            {t('customCollection.empty')}
           </p>
         )}
 
@@ -142,7 +144,7 @@ export function CustomCollectionDetailPage() {
                 onChange={(e) => setOnlyMissing(e.target.checked)}
                 className="accent-zeon-500"
               />
-              Solo faltantes
+              {t('common.onlyMissing')}
             </label>
           </>
         )}

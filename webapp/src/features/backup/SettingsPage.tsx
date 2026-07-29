@@ -16,6 +16,8 @@ import {
   type BackupPayload,
 } from './backup'
 import { Button } from '@/ui/Button'
+import { useT, useUiLanguage } from '@/lib/useT'
+import { UI_LANGUAGES } from '@/lib/i18n'
 
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
@@ -29,6 +31,9 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 export function SettingsPage() {
+  const t = useT()
+  const language = useUiLanguage((s) => s.language)
+  const setLanguage = useUiLanguage((s) => s.setLanguage)
   const sync = useCatalogSync()
   const backups = useLiveQuery(() => db.backups.orderBy('createdAt').reverse().toArray()) ?? []
   const [folderName, setFolderName] = useState<string | null>(null)
@@ -47,8 +52,8 @@ export function SettingsPage() {
 
   useEffect(() => {
     if (!msg) return
-    const t = setTimeout(() => setMsg(null), 2500)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setMsg(null), 2500)
+    return () => clearTimeout(timer)
   }, [msg])
 
   const exportNow = async () => {
@@ -66,7 +71,7 @@ export function SettingsPage() {
     try {
       setPendingImport(parseBackup(await file.text()))
     } catch (err) {
-      setImportError(err instanceof Error ? err.message : 'Fichero inválido')
+      setImportError(err instanceof Error ? err.message : t('settings.invalidFile'))
     }
   }
 
@@ -74,22 +79,41 @@ export function SettingsPage() {
     if (!pendingImport) return
     await restoreBackup(pendingImport, mode)
     setPendingImport(null)
-    setMsg('Datos restaurados')
+    setMsg(t('settings.restored'))
   }
 
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4">
-      <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">AJUSTES</h1>
+      <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">{t('settings.title')}</h1>
 
-      <Section title="Catálogo">
-        <p className="text-xs text-hangar-300">
-          El catálogo y los precios se publican automáticamente desde CardTrader; nadie necesita
-          iniciar sesión para usarlos.
-        </p>
+      <Section title={t('settings.language')}>
+        <p className="mb-3 text-xs text-hangar-300">{t('settings.languageHint')}</p>
+        <div className="flex flex-wrap gap-2">
+          {UI_LANGUAGES.map(({ code, label }) => (
+            <button
+              key={code}
+              onClick={() => setLanguage(code)}
+              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
+                language === code
+                  ? 'border-federation-500/50 bg-federation-500/15 text-federation-400'
+                  : 'border-hangar-700 text-hangar-300 hover:border-hangar-600'
+              }`}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+      </Section>
+
+      <Section title={t('settings.catalog')}>
+        <p className="text-xs text-hangar-300">{t('settings.catalogHint')}</p>
         {meta && (
           <p className="mt-1 text-xs text-hangar-300">
-            Datos publicados: {new Date(meta.generatedAt).toLocaleString('es-ES')} ·{' '}
-            {meta.expansionCount} expansiones · {meta.cardCount} cartas.
+            {t('settings.publishedData', {
+              date: new Date(meta.generatedAt).toLocaleString(),
+              expansions: meta.expansionCount,
+              cards: meta.cardCount,
+            })}
           </p>
         )}
         <Button
@@ -99,23 +123,19 @@ export function SettingsPage() {
           onClick={() => sync.run(true)}
         >
           <RotateCw size={14} className={sync.running ? 'animate-spin' : undefined} />
-          {sync.running ? `Sincronizando ${sync.done}/${sync.total}…` : 'Re-sincronizar todo'}
+          {sync.running
+            ? t('settings.syncing', { done: sync.done, total: sync.total })
+            : t('settings.resync')}
         </Button>
       </Section>
 
-      <Section title="Colecciones personalizadas">
-        <p className="mb-3 text-xs text-hangar-300">
-          Agrupa cartas como quieras (tipos, favoritas, arcos…) y úsalas como filtro en el catálogo y
-          en tu colección.
-        </p>
+      <Section title={t('settings.customCollections')}>
+        <p className="mb-3 text-xs text-hangar-300">{t('settings.customCollectionsHint')}</p>
         <CustomCollectionsManager />
       </Section>
 
-      <Section title="Copias de seguridad">
-        <p className="text-xs text-hangar-300">
-          Se guarda una copia automática de colección, wishlist, listas de intercambio y colecciones
-          personalizadas tras cada cambio (histórico de 5).
-        </p>
+      <Section title={t('settings.backups')}>
+        <p className="text-xs text-hangar-300">{t('settings.backupsHint')}</p>
         {folderBackupSupported() ? (
           <div className="mt-3 flex items-center gap-3">
             <Button
@@ -124,24 +144,24 @@ export function SettingsPage() {
               onClick={async () => {
                 if (await chooseBackupFolder()) {
                   setFolderName(await getBackupFolderName())
-                  setMsg('Carpeta configurada')
+                  setMsg(t('settings.folderConfigured'))
                 }
               }}
             >
               <Folder size={14} />
-              {folderName ? `Carpeta: ${folderName}` : 'Elegir carpeta de backups'}
+              {folderName ? t('settings.folder', { name: folderName }) : t('settings.chooseFolder')}
             </Button>
           </div>
         ) : (
           <p className="mt-2 text-xs text-haro-400">
-            Tu navegador no permite guardar en carpeta automáticamente: usa el export manual.
+            {t('settings.noFolderSupport')}
           </p>
         )}
         {backups.length > 0 && (
           <ul className="mt-3 flex flex-col gap-1">
             {backups.map((b) => (
               <li key={b.id} className="flex items-center justify-between text-xs text-hangar-300">
-                <span>{new Date(b.createdAt).toLocaleString('es-ES')}</span>
+                <span>{new Date(b.createdAt).toLocaleString()}</span>
                 <button
                   className="text-federation-400 hover:underline"
                   onClick={() => {
@@ -149,11 +169,11 @@ export function SettingsPage() {
                       setPendingImport(parseBackup(b.payload))
                       setImportError(null)
                     } catch (err) {
-                      setImportError(err instanceof Error ? err.message : 'Backup corrupto')
+                      setImportError(err instanceof Error ? err.message : t('settings.corruptBackup'))
                     }
                   }}
                 >
-                  Restaurar
+                  {t('settings.restore')}
                 </button>
               </li>
             ))}
@@ -161,15 +181,15 @@ export function SettingsPage() {
         )}
       </Section>
 
-      <Section title="Exportar / importar">
+      <Section title={t('settings.exportImport')}>
         <div className="flex flex-wrap gap-2">
           <Button onClick={exportNow} className="gap-1.5">
             <DownloadIcon size={14} />
-            Exportar JSON
+            {t('settings.exportJson')}
           </Button>
           <Button variant="secondary" onClick={() => fileInput.current?.click()} className="gap-1.5">
             <Upload size={14} />
-            Importar JSON
+            {t('settings.importJson')}
           </Button>
           <input
             ref={fileInput}
@@ -186,39 +206,37 @@ export function SettingsPage() {
         {importError && <p className="mt-2 text-sm text-zeon-400">{importError}</p>}
       </Section>
 
-      <Section title="Proyecto">
-        <p className="text-xs text-hangar-300">
-          Gundam Tracker es de código abierto: aportaciones e informes de error son bienvenidos.
-        </p>
+      <Section title={t('settings.project')}>
+        <p className="text-xs text-hangar-300">{t('settings.projectHint')}</p>
         <Link
           to="/about"
           className="mt-3 inline-flex items-center gap-1.5 text-sm text-federation-400 hover:underline"
         >
           <CodeXml size={14} />
-          Acerca del proyecto y repositorio
+          {t('settings.aboutLink')}
         </Link>
       </Section>
 
       {pendingImport && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-6">
           <div className="w-full max-w-md rounded-2xl border border-hangar-700 bg-hangar-900 p-6">
-            <h3 className="font-display text-lg font-bold text-hangar-100">Restaurar datos</h3>
+            <h3 className="font-display text-lg font-bold text-hangar-100">{t('settings.restoreTitle')}</h3>
             <p className="mt-2 text-sm text-hangar-300">
-              Backup del {new Date(pendingImport.exportedAt).toLocaleString('es-ES')}:
+              {t('settings.restoreFrom', { date: new Date(pendingImport.exportedAt).toLocaleString() })}
             </p>
             <ul className="mt-2 text-sm text-hangar-100">
-              <li>· {pendingImport.collection.length} entradas de colección</li>
-              <li>· {pendingImport.wishlist.length} cartas en wishlist</li>
-              <li>· {pendingImport.tradeLists.length} listas de trade</li>
-              <li>· {pendingImport.customCollections.length} colecciones personalizadas</li>
+              <li>· {t('settings.restoreCollection', { n: pendingImport.collection.length })}</li>
+              <li>· {t('settings.restoreWishlist', { n: pendingImport.wishlist.length })}</li>
+              <li>· {t('settings.restoreTrades', { n: pendingImport.tradeLists.length })}</li>
+              <li>· {t('settings.restoreCustom', { n: pendingImport.customCollections.length })}</li>
             </ul>
             <div className="mt-4 flex gap-2">
-              <Button onClick={() => applyImport('merge')}>Fusionar</Button>
+              <Button onClick={() => applyImport('merge')}>{t('settings.merge')}</Button>
               <Button variant="danger" onClick={() => applyImport('replace')}>
-                Reemplazar todo
+                {t('settings.replaceAll')}
               </Button>
               <Button variant="ghost" onClick={() => setPendingImport(null)}>
-                Cancelar
+                {t('common.cancel')}
               </Button>
             </div>
           </div>

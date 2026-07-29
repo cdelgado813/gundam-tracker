@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Bell, CloudDownload, ListChecks, Search, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
+import { useT } from '@/lib/useT'
 import { useCatalogSync } from './sync'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { RarityFilterChips } from './RarityFilterChips'
@@ -11,6 +12,7 @@ import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
 
 function SyncBanner() {
+  const t = useT()
   const sync = useCatalogSync()
   const expansions = useLiveQuery(() => db.expansions.toArray()) ?? []
   const unsynced = expansions.filter((e) => e.syncedAt === undefined).length
@@ -27,7 +29,7 @@ function SyncBanner() {
     return (
       <div className="mb-4 rounded-xl border border-federation-500/30 bg-federation-500/10 p-4">
         <p className="font-display text-sm font-semibold text-federation-400">
-          Sincronizando catálogo… {sync.done}/{sync.total}
+          {t('catalog.syncing', { done: sync.done, total: sync.total })}
         </p>
         {sync.currentName && <p className="mt-1 text-xs text-hangar-300">{sync.currentName}</p>}
         <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-hangar-800">
@@ -45,7 +47,7 @@ function SyncBanner() {
       <div className="mb-4 rounded-xl border border-zeon-500/30 bg-zeon-500/10 p-4">
         <p className="text-sm text-zeon-400">{sync.error}</p>
         <Button variant="danger" className="mt-2" onClick={() => sync.run()}>
-          Reintentar
+          {t('common.retry')}
         </Button>
       </div>
     )
@@ -55,13 +57,10 @@ function SyncBanner() {
     return (
       <div className="mb-4 rounded-xl border border-hangar-700 bg-hangar-900 p-6 text-center">
         <CloudDownload size={32} strokeWidth={1.5} className="mx-auto text-federation-400" />
-        <h2 className="mt-2 font-display text-lg font-bold">Descarga el catálogo</h2>
-        <p className="mx-auto mt-1 max-w-sm text-sm text-hangar-300">
-          Baja todas las expansiones del Gundam Card Game a este dispositivo para navegar y buscar
-          incluso sin conexión.
-        </p>
+        <h2 className="mt-2 font-display text-lg font-bold">{t('catalog.downloadTitle')}</h2>
+        <p className="mx-auto mt-1 max-w-sm text-sm text-hangar-300">{t('catalog.downloadBody')}</p>
         <Button className="mt-4" onClick={() => sync.run()}>
-          Sincronizar ahora
+          {t('catalog.syncNow')}
         </Button>
       </div>
     )
@@ -70,11 +69,9 @@ function SyncBanner() {
   if (unsynced > 0) {
     return (
       <div className="mb-4 flex items-center justify-between rounded-xl border border-haro-400/30 bg-haro-400/10 p-3">
-        <p className="text-sm text-haro-400">
-          {unsynced} expansión{unsynced > 1 ? 'es' : ''} sin descargar
-        </p>
+        <p className="text-sm text-haro-400">{t('catalog.pendingExpansions', { n: unsynced })}</p>
         <Button variant="secondary" onClick={() => sync.run()}>
-          Descargar
+          {t('catalog.download')}
         </Button>
       </div>
     )
@@ -98,6 +95,7 @@ function CardResults({
   onToggleSelect: (cardId: number) => void
   onSelectAllChange: (ids: Set<number>) => void
 }) {
+  const t = useT()
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const trades = useTradeListSet()
@@ -132,7 +130,7 @@ function CardResults({
   if (results.length === 0)
     return (
       <p className="py-10 text-center text-sm text-hangar-300">
-        Sin resultados{query ? ` para «${query}»` : ''}.
+        {query ? t('catalog.noResultsFor', { q: query }) : t('catalog.noResults')}
       </p>
     )
 
@@ -145,13 +143,12 @@ function CardResults({
           onClick={() => onSelectAllChange(allResultsSelected ? new Set() : new Set(results.map((c) => c.id)))}
           className="mb-2 text-sm text-federation-400 hover:underline"
         >
-          {allResultsSelected ? 'Ninguna' : `Seleccionar las ${results.length}`}
+          {allResultsSelected ? t('common.selectNone') : t('catalog.selectN', { n: results.length })}
         </button>
       )}
       {allMatches.length > MAX_RESULTS && (
         <p className="mb-2 text-xs text-hangar-300">
-          Mostrando los primeros {MAX_RESULTS} de {allMatches.length} resultados — afina la búsqueda
-          para ver el resto.
+          {t('catalog.truncated', { max: MAX_RESULTS, total: allMatches.length })}
         </p>
       )}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
@@ -173,6 +170,7 @@ function CardResults({
 }
 
 export function CatalogPage() {
+  const t = useT()
   // Filtros en la URL (con replace) para que «volver» desde una carta los restaure
   // vía historial en vez de perderlos con el estado del componente (spec card-catalog).
   const [searchParams, setSearchParams] = useSearchParams()
@@ -203,8 +201,8 @@ export function CatalogPage() {
 
   useEffect(() => {
     if (!toast) return
-    const t = setTimeout(() => setToast(null), 2000)
-    return () => clearTimeout(t)
+    const timer = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(timer)
   }, [toast])
 
   const toggleSelect = (cardId: number) => {
@@ -228,7 +226,7 @@ export function CatalogPage() {
         <div className="flex items-center justify-between">
           <span className="w-20" aria-hidden />
           <h1 className="font-display text-2xl font-bold tracking-widest text-hangar-100">
-            CATÁLOGO
+            {t('catalog.title')}
           </h1>
           <span className="w-20 text-right">
             {showingResults &&
@@ -237,22 +235,22 @@ export function CatalogPage() {
                   onClick={stopSelecting}
                   className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
                 >
-                  <X size={14} /> Cancelar
+                  <X size={14} /> {t('common.cancel')}
                 </button>
               ) : (
                 <button
                   onClick={() => setSelecting(true)}
                   className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
                 >
-                  <ListChecks size={14} /> Seleccionar
+                  <ListChecks size={14} /> {t('common.select')}
                 </button>
               ))}
           </span>
         </div>
         <p className="mt-1 text-sm text-hangar-300">
           {expansions.length > 0
-            ? `${expansions.reduce((s, e) => s + (e.cardCount ?? 0), 0)} cartas del Gundam Card Game`
-            : 'Todo el Gundam Card Game, en tu bolsillo'}
+            ? t('catalog.subtitle', { n: expansions.reduce((s, e) => s + (e.cardCount ?? 0), 0) })
+            : t('catalog.subtitleEmpty')}
         </p>
         <div className="relative mx-auto mt-4 max-w-xl">
           <Search
@@ -263,7 +261,7 @@ export function CatalogPage() {
             type="search"
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            placeholder="Buscar por nombre o número (ST01-001)…"
+            placeholder={t('catalog.searchPlaceholder')}
             className="w-full rounded-2xl border border-hangar-600 bg-hangar-900 py-3.5 pl-11 pr-4 text-base text-hangar-100 shadow-lg shadow-hangar-950/50 placeholder:text-hangar-300/50 focus:border-federation-400 focus:outline-none focus:ring-2 focus:ring-federation-500/20"
           />
         </div>
@@ -273,8 +271,7 @@ export function CatalogPage() {
       {newCount > 0 && (
         <p className="mb-4 flex items-center gap-2 rounded-xl bg-federation-500/10 px-3 py-2 text-sm text-federation-400">
           <Bell size={14} />
-          {newCount} expansión{newCount > 1 ? 'es' : ''} nueva{newCount > 1 ? 's' : ''} disponible
-          — usa «Descargar» para bajarla{newCount > 1 ? 's' : ''}.
+          {t('catalog.newExpansions', { n: newCount })}
         </p>
       )}
 
@@ -304,7 +301,7 @@ export function CatalogPage() {
                   <p className="mt-0.5 font-mono text-xs uppercase text-hangar-300">{e.code}</p>
                 </div>
                 <span className="ml-3 shrink-0 rounded-lg bg-hangar-800 px-2 py-1 font-display text-xs text-hangar-300">
-                  {syncedCards != null ? `${syncedCards} cartas` : 'sin datos'}
+                  {syncedCards != null ? `${syncedCards} ${t('common.cards')}` : t('common.noData')}
                 </span>
               </Link>
             )

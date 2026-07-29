@@ -5,8 +5,10 @@ import { Inbox, Star, TriangleAlert } from 'lucide-react'
 import { db } from '@/lib/db'
 import { decodeTradeList } from './share'
 import { Button } from '@/ui/Button'
+import { useT } from '@/lib/useT'
 
 export function ImportTradePage() {
+  const t = useT()
   const { payload } = useParams()
   const navigate = useNavigate()
 
@@ -14,7 +16,9 @@ export function ImportTradePage() {
     try {
       return { ok: true as const, list: decodeTradeList(payload ?? '') }
     } catch (err) {
-      return { ok: false as const, error: err instanceof Error ? err.message : 'Enlace inválido' }
+      // El detalle del error vive en share.ts; aquí se muestra el mensaje traducido.
+      void err
+      return { ok: false as const }
     }
   }, [payload])
 
@@ -31,9 +35,9 @@ export function ImportTradePage() {
     return (
       <div className="mx-auto max-w-md p-6 text-center">
         <TriangleAlert size={32} strokeWidth={1.5} className="mx-auto text-zeon-400" />
-        <p className="mt-3 text-sm text-zeon-400">{decoded.error}</p>
+        <p className="mt-3 text-sm text-zeon-400">{t('trades.invalidLink')}</p>
         <Link to="/" className="mt-4 inline-block text-sm text-federation-400 underline">
-          Ir al catálogo
+          {t('trades.goToCatalog')}
         </Link>
       </div>
     )
@@ -63,21 +67,20 @@ export function ImportTradePage() {
         <Inbox size={32} strokeWidth={1.5} className="mx-auto text-federation-400" />
         <h1 className="mt-2 font-display text-xl font-bold text-hangar-100">{list.name}</h1>
         <p className="mt-1 text-sm text-hangar-300">
-          {list.alias ? `Lista compartida por ${list.alias} · ` : 'Lista compartida · '}
-          {list.items.length} cartas
+          {list.alias ? t('trades.sharedBy', { alias: list.alias }) : t('trades.shared')} ·{' '}
+          {t('common.card_other', { n: list.items.length })}
         </p>
         {matches > 0 && (
           <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-haro-400/10 px-3 py-1 text-sm text-haro-400">
             <Star size={13} fill="currentColor" />
-            {matches} coinciden con tu wishlist
+            {t('trades.wishlistMatches', { n: matches })}
           </p>
         )}
       </header>
 
       {missingCount > 0 && (
         <p className="mb-3 rounded-xl bg-federation-500/10 px-3 py-2 text-sm text-federation-400">
-          {missingCount} carta{missingCount > 1 ? 's' : ''} pertenecen a expansiones que aún no has
-          sincronizado: se muestran por su id. Sincroniza el catálogo para verlas completas.
+          {t('trades.unsyncedNotice', { n: missingCount })}
         </p>
       )}
 
@@ -118,7 +121,7 @@ export function ImportTradePage() {
       </ul>
 
       <div className="mt-5 flex justify-center">
-        <Button onClick={save}>Guardar como lista recibida</Button>
+        <Button onClick={save}>{t('trades.saveReceived')}</Button>
       </div>
     </div>
   )

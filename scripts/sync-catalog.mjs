@@ -64,12 +64,27 @@ function blueprintToCard(bp) {
 
 function toPriceEntry(blueprintId, offers) {
   const nearMint = offers.find((o) => o.properties_hash?.condition === 'Near Mint')
+  // Desglose por idioma de carta: los precios difieren mucho entre en/jp/zh-CN
+  // (hasta 2× en la misma carta). Campo aditivo: `minCents` se conserva para no
+  // romper clientes con la app cacheada de antes (design D3).
+  const byLanguage = {}
+  for (const o of offers) {
+    const lang = o.properties_hash?.gundam_language
+    if (!lang) continue
+    const current = byLanguage[lang]
+    if (!current) byLanguage[lang] = { minCents: o.price_cents, offersCount: 1 }
+    else {
+      current.offersCount++
+      if (o.price_cents < current.minCents) current.minCents = o.price_cents
+    }
+  }
   return {
     blueprintId: Number(blueprintId),
     minCents: offers[0]?.price_cents ?? null,
     minNearMintCents: nearMint?.price_cents ?? null,
     currency: offers[0]?.price_currency ?? 'EUR',
     offersCount: offers.length,
+    ...(Object.keys(byLanguage).length > 0 ? { byLanguage } : {}),
     fetchedAt: Date.now(),
   }
 }
