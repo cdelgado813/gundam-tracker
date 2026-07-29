@@ -11,6 +11,10 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      // Registro propio en main.tsx (con comprobación periódica de versión nueva):
+      // el registerSW.js por defecto solo se registra una vez y nunca vuelve a
+      // mirar si hay una versión nueva mientras la pestaña sigue abierta.
+      injectRegister: false,
       manifest: {
         name: 'Gundam Tracker',
         short_name: 'Gundam Tracker',
