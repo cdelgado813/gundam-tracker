@@ -45,6 +45,19 @@ export interface StaticCard {
   searchName: string
 }
 
+export interface StaticMarketOffer {
+  priceCents: number
+  quantity: number
+  condition: string | null
+}
+
+export interface StaticLanguagePrice {
+  minCents: number
+  offersCount: number
+  /** Las más baratas de ese idioma (hasta 5); ver scripts/sync-catalog.mjs. */
+  offers?: StaticMarketOffer[]
+}
+
 export interface StaticPriceEntry {
   blueprintId: number
   minCents: number | null
@@ -52,7 +65,7 @@ export interface StaticPriceEntry {
   currency: string
   offersCount: number
   /** Desglose por idioma de carta; ausente en datos publicados antes del desglose. */
-  byLanguage?: Record<string, { minCents: number; offersCount: number }>
+  byLanguage?: Record<string, StaticLanguagePrice>
   fetchedAt: number
 }
 

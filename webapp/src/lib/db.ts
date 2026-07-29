@@ -39,9 +39,18 @@ export interface Card {
   searchName: string
 }
 
+export interface MarketOffer {
+  priceCents: number
+  quantity: number
+  /** Texto libre tal como lo publica CardTrader; solo se muestra, no se tipa contra CardCondition. */
+  condition: string | null
+}
+
 export interface LanguagePrice {
   minCents: number
   offersCount: number
+  /** Las más baratas de ese idioma (hasta 5), ya ordenadas; ver scripts/sync-catalog.mjs. */
+  offers?: MarketOffer[]
 }
 
 export interface PriceCache {

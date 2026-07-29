@@ -23,6 +23,8 @@ const API_BASE = 'https://api.cardtrader.com/api/v2'
 const GUNDAM_GAME_ID = 23
 const SINGLES_CATEGORY_ID = 272
 const CDN_BASE = 'https://cardtrader.com'
+/** Ofertas publicadas por idioma y carta (las más baratas). Ver toPriceEntry. */
+const OFFERS_PER_LANGUAGE = 5
 
 const OUT_DIR = path.join(
   path.dirname(fileURLToPath(import.meta.url)),
@@ -72,10 +74,21 @@ function toPriceEntry(blueprintId, offers) {
     const lang = o.properties_hash?.gundam_language
     if (!lang) continue
     const current = byLanguage[lang]
-    if (!current) byLanguage[lang] = { minCents: o.price_cents, offersCount: 1 }
+    if (!current) byLanguage[lang] = { minCents: o.price_cents, offersCount: 1, offers: [] }
     else {
       current.offersCount++
       if (o.price_cents < current.minCents) current.minCents = o.price_cents
+    }
+    // Muestra de las ofertas más baratas de cada idioma (las respuestas vienen
+    // ordenadas por precio asc). Publicar TODAS serían ~4 MB; con 5 por idioma
+    // se ve oferta real sin inflar el bundle de datos.
+    const sample = byLanguage[lang].offers
+    if (sample.length < OFFERS_PER_LANGUAGE) {
+      sample.push({
+        priceCents: o.price_cents,
+        quantity: o.quantity,
+        condition: o.properties_hash?.condition ?? null,
+      })
     }
   }
   return {

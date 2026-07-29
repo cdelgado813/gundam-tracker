@@ -1,13 +1,23 @@
 import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Check, ExternalLink, ImageOff, Minus, Plus, Repeat, Star } from 'lucide-react'
+import {
+  ArrowLeft,
+  Check,
+  ChevronDown,
+  ExternalLink,
+  ImageOff,
+  Minus,
+  Plus,
+  Repeat,
+  Star,
+} from 'lucide-react'
 import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/lib/db'
 import { addToCollection, setEntryQuantity } from '@/features/collection/data'
 import { toggleWishlist } from '@/features/wishlist/data'
 import { addToTradeList, createTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from '@/features/trades/data'
 import { CustomCollectionsPicker } from '@/features/collections/CustomCollectionsPicker'
-import { cardTraderUrl, formatCents, getPrice, languagePrices, priceAge } from './prices'
+import { cardTraderUrl, formatCents, getPrice, languagePrices, offersForLanguage, priceAge } from './prices'
 import { useT } from '@/lib/useT'
 import { Button } from '@/ui/Button'
 
@@ -163,6 +173,61 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
   )
 }
 
+/** Fila de precio de un idioma; si el snapshot trae ofertas, se puede desplegar la lista. */
+function LanguagePriceRow({
+  lang,
+  minCents,
+  currency,
+  owned,
+  offers,
+}: {
+  lang: CardLanguage
+  minCents: number
+  currency?: string
+  owned: boolean
+  offers: ReturnType<typeof offersForLanguage>
+}) {
+  const t = useT()
+  const [open, setOpen] = useState(false)
+  const hasOffers = offers.length > 0
+
+  return (
+    <li className={owned ? 'text-newtype-400' : 'text-hangar-300'}>
+      <button
+        onClick={() => hasOffers && setOpen(!open)}
+        disabled={!hasOffers}
+        className="flex w-full items-baseline justify-between py-0.5 text-sm disabled:cursor-default"
+      >
+        <span className="flex items-center gap-1 font-mono text-xs uppercase">
+          {lang}
+          {hasOffers && (
+            <ChevronDown
+              size={12}
+              className={`transition-transform ${open ? 'rotate-180' : ''}`}
+            />
+          )}
+        </span>
+        <span className="font-display">{formatCents(minCents, currency)}</span>
+      </button>
+      {open && hasOffers && (
+        <ul className="mb-1.5 flex flex-col gap-1 rounded-lg bg-hangar-800/60 p-2">
+          {offers.map((o, i) => (
+            <li key={i} className="flex items-center justify-between text-xs text-hangar-300">
+              <span>
+                {o.condition ?? '—'} · ×{o.quantity}
+              </span>
+              <span className="font-mono text-hangar-100">{formatCents(o.priceCents, currency)}</span>
+            </li>
+          ))}
+          {offers.length >= 5 && (
+            <li className="text-center text-[11px] text-hangar-300">{t('card.moreOffers')}</li>
+          )}
+        </ul>
+      )}
+    </li>
+  )
+}
+
 export function CardDetailPage() {
   const t = useT()
   const { id } = useParams()
@@ -262,19 +327,16 @@ export function CardDetailPage() {
                 <p className="mb-1.5 font-display text-[10px] font-bold uppercase tracking-widest text-hangar-300">
                   {t('card.priceByLanguage')}
                 </p>
-                <ul className="flex flex-col gap-1">
+                <ul className="flex flex-col gap-0.5">
                   {byLanguage.map(([lang, value]) => (
-                    <li
+                    <LanguagePriceRow
                       key={lang}
-                      className={`flex items-baseline justify-between text-sm ${
-                        ownedLanguages.has(lang) ? 'text-newtype-400' : 'text-hangar-300'
-                      }`}
-                    >
-                      <span className="font-mono text-xs uppercase">{lang}</span>
-                      <span className="font-display">
-                        {formatCents(value.minCents, price?.currency)}
-                      </span>
-                    </li>
+                      lang={lang}
+                      minCents={value.minCents}
+                      currency={price?.currency}
+                      owned={ownedLanguages.has(lang)}
+                      offers={offersForLanguage(price ?? undefined, lang)}
+                    />
                   ))}
                 </ul>
               </div>

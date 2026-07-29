@@ -70,6 +70,15 @@ export function languagePrices(price: PriceCache | undefined): [CardLanguage, La
 }
 
 /**
+ * Las ofertas más baratas publicadas para un idioma (hasta 5, ya ordenadas por
+ * precio). Vacío si el snapshot es anterior a que el pipeline empezara a
+ * publicarlas o si ese idioma no tenía ofertas.
+ */
+export function offersForLanguage(price: PriceCache | undefined, language: CardLanguage) {
+  return price?.byLanguage?.[language]?.offers ?? []
+}
+
+/**
  * Ficha pública de la carta en CardTrader, para comprobar precio real o comprar.
  * Formato verificado (HTTP 200 con blueprint real); único punto a tocar si cambia.
  */
