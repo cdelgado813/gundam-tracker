@@ -11,8 +11,9 @@ import { collectionColorClasses } from './colors'
  * Barra flotante del modo selección (design D2). Acciones:
  * - «Marcar en propiedad»: +1 Near Mint/en por carta seleccionada, siempre disponible.
  * - «A colección»: asignar a una colección personalizada (existente o nueva).
- * - «Quitar»: solo cuando se monta dentro de una colección personalizada
- *   (`removeFromCollectionId`), saca las cartas de esa agrupación.
+ * - «Quitar de la colección»: solo cuando se monta dentro de una colección
+ *   personalizada (`removeFromCollectionId`); pide confirmación y solo saca
+ *   las cartas de esa agrupación — no toca la propiedad ni otras colecciones.
  */
 export function BulkAssignBar({
   selectedIds,
@@ -46,8 +47,14 @@ export function BulkAssignBar({
 
   const removeFromCollection = async () => {
     if (removeFromCollectionId == null) return
+    const n = selectedIds.size
+    // Acción destructiva sobre la curación de la colección: confirmar, igual que
+    // el resto de acciones irreversibles de la app (borrar colección, borrar lista).
+    if (!window.confirm(`¿Quitar ${n} carta${n !== 1 ? 's' : ''} de esta colección? No afecta a tu propiedad.`)) {
+      return
+    }
     await removeCardsFromCollection(removeFromCollectionId, [...selectedIds])
-    onDone(`${selectedIds.size} carta${selectedIds.size !== 1 ? 's' : ''} quitadas de la colección`)
+    onDone(`${n} carta${n !== 1 ? 's' : ''} quitadas de la colección`)
   }
 
   const createAndAssign = async () => {
@@ -135,7 +142,7 @@ export function BulkAssignBar({
             {removeFromCollectionId != null && (
               <Button variant="danger" onClick={removeFromCollection} disabled={none} className="gap-1.5">
                 <FolderMinus size={14} />
-                Quitar
+                Quitar de la colección
               </Button>
             )}
             <button
