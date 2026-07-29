@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { Link, useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { ArrowLeft, Check, ImageOff, Minus, Plus, Repeat, Star } from 'lucide-react'
 import { db, type CardCondition, type CardLanguage, type PriceCache } from '@/lib/db'
@@ -161,6 +161,7 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
 
 export function CardDetailPage() {
   const { id } = useParams()
+  const navigate = useNavigate()
   const cardId = Number(id)
   const card = useLiveQuery(() => db.cards.get(cardId), [cardId])
   const expansion = useLiveQuery(
@@ -192,12 +193,18 @@ export function CardDetailPage() {
 
   return (
     <div className="mx-auto max-w-4xl p-4">
-      <Link
-        to={`/expansion/${card.expansionId}`}
+      <button
+        onClick={() => {
+          // Volver contextual (design D1): historial real si venimos de dentro de la app;
+          // fallback a la expansión en URL directa/recarga (idx 0 del router).
+          const idx = (window.history.state as { idx?: number } | null)?.idx ?? 0
+          if (idx > 0) navigate(-1)
+          else navigate(`/expansion/${card.expansionId}`)
+        }}
         className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
       >
-        <ArrowLeft size={14} /> {expansion?.name ?? 'Expansión'}
-      </Link>
+        <ArrowLeft size={14} /> Volver
+      </button>
 
       <div className="mt-3 flex flex-col gap-6 sm:flex-row sm:items-start">
         <div className="mx-auto w-64 shrink-0 sm:mx-0 sm:w-72 md:w-80 lg:w-96">
@@ -219,6 +226,7 @@ export function CardDetailPage() {
             <h1 className="font-display text-2xl font-bold text-hangar-100">{card.name}</h1>
             <p className="mt-1 font-mono text-sm text-hangar-300">
               {card.collectorNumber} · {card.rarity}
+              {expansion ? ` · ${expansion.name}` : ''}
             </p>
           </div>
 

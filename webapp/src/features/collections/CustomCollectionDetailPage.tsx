@@ -1,12 +1,13 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { ArrowLeft, Trash2 } from 'lucide-react'
+import { ArrowLeft, ListChecks, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useOwnedMap, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
+import { BulkAssignBar } from './BulkAssignBar'
 
 /**
  * Una colección personalizada es, para el usuario, una colección propia: lo que importa
@@ -17,6 +18,9 @@ export function CustomCollectionDetailPage() {
   const navigate = useNavigate()
   const collectionId = Number(id)
   const [onlyMissing, setOnlyMissing] = useState(false)
+  const [selecting, setSelecting] = useState(false)
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
+  const [toast, setToast] = useState<string | null>(null)
   const collection = useLiveQuery(() => db.customCollections.get(collectionId), [collectionId])
   const cards =
     useLiveQuery(async () => {
@@ -27,6 +31,12 @@ export function CustomCollectionDetailPage() {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
 
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 2000)
+    return () => clearTimeout(t)
+  }, [toast])
+
   if (!collection) return null
 
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
@@ -34,12 +44,57 @@ export function CustomCollectionDetailPage() {
   const visible = onlyMissing ? cards.filter((c) => !(owned.get(c.id) ?? 0)) : cards
   const colors = collectionColorClasses[collection.color]
 
+  const toggleSelect = (cardId: number) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(cardId)) next.delete(cardId)
+      else next.add(cardId)
+      return next
+    })
+  }
+
+  const stopSelecting = () => {
+    setSelecting(false)
+    setSelectedIds(new Set())
+  }
+
+  const allVisibleSelected = visible.length > 0 && visible.every((c) => selectedIds.has(c.id))
+  const toggleSelectAll = () => {
+    setSelectedIds(allVisibleSelected ? new Set() : new Set(visible.map((c) => c.id)))
+  }
+
   return (
-    <div className="mx-auto max-w-5xl p-4">
+    <div className="mx-auto max-w-5xl p-4 pb-24">
       <header className="mb-4">
-        <Link to="/collection" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
-          <ArrowLeft size={14} /> Colección
-        </Link>
+        <div className="flex items-center justify-between">
+          <Link to="/collection" className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100">
+            <ArrowLeft size={14} /> Colección
+          </Link>
+          {cards.length > 0 &&
+            (selecting ? (
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={toggleSelectAll}
+                  className="text-sm text-federation-400 hover:underline"
+                >
+                  {allVisibleSelected ? 'Ninguna' : 'Todas'}
+                </button>
+                <button
+                  onClick={stopSelecting}
+                  className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+                >
+                  <X size={14} /> Cancelar
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setSelecting(true)}
+                className="inline-flex items-center gap-1 text-sm text-hangar-300 hover:text-hangar-100"
+              >
+                <ListChecks size={14} /> Seleccionar
+              </button>
+            ))}
+        </div>
         <div className="mt-1 flex items-center justify-between">
           <h1 className="flex items-center gap-2 font-display text-xl font-bold text-hangar-100">
             <span className={`h-2.5 w-2.5 rounded-full ${colors.dot}`} />
@@ -95,9 +150,29 @@ export function CustomCollectionDetailPage() {
             ownedCount={owned.get(c.id)}
             wishlisted={wishlist.has(c.id)}
             dimIfMissing
+            selectionMode={selecting}
+            selected={selectedIds.has(c.id)}
+            onToggleSelect={toggleSelect}
           />
         ))}
       </div>
+
+      {selecting && (
+        <BulkAssignBar
+          selectedIds={selectedIds}
+          removeFromCollectionId={collectionId}
+          onDone={(msg) => {
+            setToast(msg)
+            stopSelecting()
+          }}
+          onCancel={stopSelecting}
+        />
+      )}
+      {toast && (
+        <div className="fixed bottom-20 left-1/2 z-50 -translate-x-1/2 rounded-xl bg-hangar-700 px-4 py-2 text-sm shadow-xl">
+          {toast}
+        </div>
+      )}
     </div>
   )
 }

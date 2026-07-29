@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react'
-import { Link } from 'react-router-dom'
+import { useEffect, useMemo, useState } from 'react'
+import { Link, useSearchParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { Bell, CloudDownload, ListChecks, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
@@ -186,8 +186,20 @@ function useOwnedUniquesByExpansion(): Map<number, number> {
 }
 
 export function CatalogPage() {
-  const [query, setQuery] = useState('')
-  const [selectedRarities, setSelectedRarities] = useState<Set<string>>(new Set())
+  // Filtros en la URL (con replace) para que «volver» desde una carta los restaure
+  // vía historial en vez de perderlos con el estado del componente (spec card-catalog).
+  const [searchParams, setSearchParams] = useSearchParams()
+  const query = searchParams.get('q') ?? ''
+  // useMemo: identidad estable de la Set entre renders para no relanzar el liveQuery de resultados
+  const selectedRarities = useMemo(() => new Set(searchParams.getAll('r')), [searchParams])
+  const updateFilters = (q: string, rarities: Set<string>) => {
+    const next = new URLSearchParams()
+    if (q) next.set('q', q)
+    for (const r of rarities) next.append('r', r)
+    setSearchParams(next, { replace: true })
+  }
+  const setQuery = (q: string) => updateFilters(q, selectedRarities)
+  const setSelectedRarities = (r: Set<string>) => updateFilters(query, r)
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [toast, setToast] = useState<string | null>(null)

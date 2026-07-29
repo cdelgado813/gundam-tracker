@@ -57,6 +57,19 @@ export async function removeCardFromCollection(collectionId: number, cardId: num
     .delete()
 }
 
+/** Quita varias cartas de una colección personalizada en lote (no toca propiedad ni otras colecciones). */
+export async function removeCardsFromCollection(
+  collectionId: number,
+  cardIds: number[],
+): Promise<void> {
+  await db.transaction('rw', db.customCollectionCards, async () => {
+    await db.customCollectionCards
+      .where('[collectionId+cardId]')
+      .anyOf(cardIds.map((cardId) => [collectionId, cardId]))
+      .delete()
+  })
+}
+
 export async function toggleCardInCollection(collectionId: number, cardId: number): Promise<boolean> {
   const existing = await db.customCollectionCards
     .where('[collectionId+cardId]')

@@ -1,23 +1,29 @@
 import { useState } from 'react'
-import { FolderPlus, Plus, X } from 'lucide-react'
+import { FolderMinus, FolderPlus, PackagePlus, Plus, X } from 'lucide-react'
 import { CUSTOM_COLLECTION_COLORS, type CustomCollectionColor } from '@/lib/db'
 import { Button } from '@/ui/Button'
+import { addCardsToOwned } from '@/features/collection/data'
 import { useCustomCollections } from './hooks'
-import { addCardsToCollection, createCustomCollection } from './data'
+import { addCardsToCollection, createCustomCollection, removeCardsFromCollection } from './data'
 import { collectionColorClasses } from './colors'
 
 /**
- * Barra flotante para mover en bloque las cartas seleccionadas a una colección
- * personalizada (existente o nueva), y salir del modo selección.
+ * Barra flotante del modo selección (design D2). Acciones:
+ * - «Marcar en propiedad»: +1 Near Mint/en por carta seleccionada, siempre disponible.
+ * - «A colección»: asignar a una colección personalizada (existente o nueva).
+ * - «Quitar»: solo cuando se monta dentro de una colección personalizada
+ *   (`removeFromCollectionId`), saca las cartas de esa agrupación.
  */
 export function BulkAssignBar({
   selectedIds,
   onDone,
   onCancel,
+  removeFromCollectionId,
 }: {
   selectedIds: Set<number>
   onDone: (msg: string) => void
   onCancel: () => void
+  removeFromCollectionId?: number
 }) {
   const collections = useCustomCollections()
   const [open, setOpen] = useState(false)
@@ -25,10 +31,23 @@ export function BulkAssignBar({
   const [name, setName] = useState('')
   const [color, setColor] = useState<CustomCollectionColor>('federation')
 
+  const none = selectedIds.size === 0
+
+  const markOwned = async () => {
+    const n = await addCardsToOwned([...selectedIds])
+    onDone(`${n} carta${n !== 1 ? 's' : ''} marcada${n !== 1 ? 's' : ''} en propiedad`)
+  }
+
   const assign = async (collectionId: number) => {
     const added = await addCardsToCollection(collectionId, [...selectedIds])
     onDone(added > 0 ? `${added} carta${added > 1 ? 's' : ''} añadidas` : 'Ya estaban todas en esa colección')
     setOpen(false)
+  }
+
+  const removeFromCollection = async () => {
+    if (removeFromCollectionId == null) return
+    await removeCardsFromCollection(removeFromCollectionId, [...selectedIds])
+    onDone(`${selectedIds.size} carta${selectedIds.size !== 1 ? 's' : ''} quitadas de la colección`)
   }
 
   const createAndAssign = async () => {
@@ -98,18 +117,27 @@ export function BulkAssignBar({
         )}
 
         <div className="flex items-center justify-between gap-2">
-          <span className="text-sm text-hangar-100">
-            {selectedIds.size} seleccionada{selectedIds.size !== 1 ? 's' : ''}
-          </span>
-          <div className="flex items-center gap-2">
+          <span className="shrink-0 text-sm text-hangar-100">{selectedIds.size}</span>
+          <div className="flex flex-wrap items-center justify-end gap-2">
+            <Button onClick={markOwned} disabled={none} className="gap-1.5">
+              <PackagePlus size={14} />
+              En propiedad
+            </Button>
             <Button
+              variant="secondary"
               onClick={() => setOpen(!open)}
-              disabled={selectedIds.size === 0}
+              disabled={none}
               className="gap-1.5"
             >
               <FolderPlus size={14} />
-              Añadir a colección
+              A colección
             </Button>
+            {removeFromCollectionId != null && (
+              <Button variant="danger" onClick={removeFromCollection} disabled={none} className="gap-1.5">
+                <FolderMinus size={14} />
+                Quitar
+              </Button>
+            )}
             <button
               aria-label="Cancelar selección"
               onClick={onCancel}
