@@ -1,7 +1,11 @@
 ## MODIFIED Requirements
 
-### Requirement: Filtro de propiedad de tres estados en colecciones personalizadas
-El detalle de una colección personalizada SHALL ofrecer un filtro de tres estados — Todas, En propiedad, Faltantes — en lugar de un único checkbox "solo faltantes".
+### Requirement: Búsqueda y filtro dentro de una colección personalizada
+La página de una colección personalizada SHALL ofrecer buscador de texto y chips de rareza que filtran sus cartas en memoria, combinables con un filtro de propiedad de tres estados — Todas, En propiedad, Faltantes — en lugar de un único checkbox "solo faltantes".
+
+#### Scenario: Encontrar una carta en una colección grande
+- **WHEN** el usuario escribe parte del nombre en el buscador de su colección personalizada
+- **THEN** el grid se reduce a las coincidencias manteniendo el estado de atenuación de faltantes
 
 #### Scenario: Ver solo lo que ya tienes de una colección personalizada
 - **WHEN** el usuario abre una colección personalizada y selecciona "En propiedad"

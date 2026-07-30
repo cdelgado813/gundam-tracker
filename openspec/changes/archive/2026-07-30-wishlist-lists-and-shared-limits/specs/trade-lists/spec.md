@@ -1,6 +1,6 @@
 ## MODIFIED Requirements
 
-### Requirement: Creación de listas de intercambio con límite de 100 cartas
+### Requirement: Creación de listas de intercambio con límite de 50 cartas
 La aplicación SHALL permitir crear listas de intercambio con nombre, compuestas por cartas (con cantidad y condición opcional) que el usuario posee, y MUST impedir que una lista supere 100 cartas (sumando cantidades).
 
 #### Scenario: Límite de 100 alcanzado
