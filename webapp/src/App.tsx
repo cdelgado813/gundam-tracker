@@ -3,6 +3,7 @@ import { HashRouter, NavLink, Route, Routes, useLocation, useNavigate } from 're
 import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
 import { useT, useSyncHtmlLang, useUiLanguage } from '@/lib/useT'
 import { useScrollRestoration, clearRememberedScroll } from '@/lib/useScrollRestoration'
+import { useListViewMode } from '@/lib/useListViewMode'
 import { ScrollEdgeButtons } from '@/ui/ScrollEdgeButtons'
 import type { TranslationKey } from '@/lib/i18n'
 import { CatalogPage } from '@/features/catalog/CatalogPage'
@@ -99,11 +100,13 @@ function Shell() {
 
 function App() {
   const initLanguage = useUiLanguage((s) => s.init)
+  const initListViewMode = useListViewMode((s) => s.init)
   useSyncHtmlLang()
 
   useEffect(() => {
     void initLanguage()
-  }, [initLanguage])
+    void initListViewMode()
+  }, [initLanguage, initListViewMode])
 
   return (
     <HashRouter>

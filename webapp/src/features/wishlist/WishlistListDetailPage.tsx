@@ -8,11 +8,14 @@ import { removeFromWishlistList, wishlistListUnits, WISHLIST_LIST_MAX_UNITS } fr
 import { shareUrlFor, encodeWishlistList, MAX_SHARE_URL_LENGTH } from './share'
 import { useCardFilter } from '@/ui/CardListControls'
 import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
+import { ListViewToggle } from '@/ui/ListViewToggle'
+import { ListItemTile } from '@/ui/ListItemTile'
 import { formatCents } from '@/features/catalog/prices'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 import { useOwnedMap } from '@/features/catalog/hooks'
+import { useListViewMode } from '@/lib/useListViewMode'
 
 type SortKey = 'name' | 'expansion' | 'price'
 
@@ -50,6 +53,9 @@ export function WishlistListDetailPage() {
   const { filtered, controls } = useCardFilter(cards)
   const filteredIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered])
   const owned = useOwnedMap()
+  const storedMode = useListViewMode((s) => s.mode)
+  // La selección solo tiene checkboxes en modo lista; en cuadrícula se fuerza lista.
+  const viewMode = selecting ? 'list' : storedMode
 
   useEffect(() => {
     if (!toast) return
@@ -222,8 +228,9 @@ export function WishlistListDetailPage() {
         </div>
       )}
       {resolved.length > 0 && (
-        <div className="mb-3">
+        <div className="mb-3 flex items-center justify-between gap-2">
           <OwnershipFilter value={ownership} onChange={setOwnership} />
+          {!selecting && <ListViewToggle />}
         </div>
       )}
 
@@ -231,6 +238,23 @@ export function WishlistListDetailPage() {
         <div className="py-16 text-center">
           <Star size={32} strokeWidth={1.5} className="mx-auto text-hangar-600" />
           <p className="mt-3 text-sm text-hangar-300">{t('wishlist.listEmpty')}</p>
+        </div>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          {visible.map(({ item, card, priceCents }) => (
+            <ListItemTile
+              key={item.cardId}
+              card={card}
+              cardId={item.cardId}
+              quantity={item.quantity}
+              detail={formatCents(priceCents)}
+              unsyncedLabel={t('trades.unsyncedCard')}
+              onRemove={
+                list.kind === 'own' ? () => removeFromWishlistList(listId, item.cardId) : undefined
+              }
+              removeLabel={t('common.remove')}
+            />
+          ))}
         </div>
       ) : (
         <ul className="flex flex-col gap-2">

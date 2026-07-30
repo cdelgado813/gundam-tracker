@@ -30,4 +30,4 @@
 
 ## 6. Verificación y despliegue
 
-- [ ] 6.1 Build limpio, smoke test del preview, commit y push a `main`
+- [x] 6.1 Build limpio, smoke test del preview, commit y push a `main`

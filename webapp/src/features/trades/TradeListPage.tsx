@@ -8,6 +8,9 @@ import { removeFromTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from './dat
 import { shareUrlFor, encodeTradeList, MAX_SHARE_URL_LENGTH } from './share'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
+import { useListViewMode } from '@/lib/useListViewMode'
+import { ListViewToggle } from '@/ui/ListViewToggle'
+import { ListItemTile } from '@/ui/ListItemTile'
 
 export function TradeListPage() {
   const t = useT()
@@ -28,6 +31,7 @@ export function TradeListPage() {
   const [qr, setQr] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [urlTooLong, setUrlTooLong] = useState(false)
+  const viewMode = useListViewMode((s) => s.mode)
 
   useEffect(() => {
     if (!toast) return
@@ -113,10 +117,36 @@ export function TradeListPage() {
         </p>
       )}
 
+      {list.items.length > 0 && (
+        <div className="mb-3 flex justify-end">
+          <ListViewToggle />
+        </div>
+      )}
+
       {list.items.length === 0 ? (
         <p className="py-10 text-center text-sm text-hangar-300">
           {t('trades.listEmpty')}
         </p>
+      ) : viewMode === 'grid' ? (
+        <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
+          {list.items.map((item) => {
+            const card = cards.get(item.cardId)
+            return (
+              <ListItemTile
+                key={`${item.cardId}-${item.condition ?? ''}`}
+                card={card ?? null}
+                cardId={item.cardId}
+                quantity={item.quantity}
+                detail={item.condition ?? undefined}
+                unsyncedLabel={t('trades.unsyncedCard')}
+                onRemove={
+                  list.kind === 'own' ? () => removeFromTradeList(listId, item.cardId, item.condition) : undefined
+                }
+                removeLabel={t('common.remove')}
+              />
+            )
+          })}
+        </div>
       ) : (
         <ul className="flex flex-col gap-2">
           {list.items.map((item) => {
