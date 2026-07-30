@@ -28,10 +28,10 @@
 
 ## 5. Release v1.0.0
 
-- [ ] 5.1 Tag `v1.0.0`
-- [ ] 5.2 GitHub Release con notas agrupadas por área (catálogo, colección, wishlist, trades, i18n, PWA, landing/about)
+- [x] 5.1 Tag `v1.0.0`
+- [x] 5.2 GitHub Release con notas agrupadas por área (catálogo, colección, wishlist, trades, i18n, PWA, landing/about)
 
 ## 6. Verificación final
 
 - [x] 6.1 Confirmar que no hay nada sensible o fuera de lugar en la raíz del repositorio tal como GitHub lo muestra (ya verificado: `jwt.json` y la colección Postman nunca se han commiteado)
-- [ ] 6.2 Commit y push del README/LICENSE a `main`
+- [x] 6.2 Commit y push del README/LICENSE a `main`
