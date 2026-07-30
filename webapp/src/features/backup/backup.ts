@@ -179,8 +179,15 @@ export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'm
         idMap.set(c.id, newId)
       }
       const cardsToAdd = payload.customCollectionCards
-        .map((cc) => ({ collectionId: idMap.get(cc.collectionId), cardId: cc.cardId, addedAt: cc.addedAt }))
-        .filter((cc): cc is { collectionId: number; cardId: number; addedAt: number } => cc.collectionId != null)
+        .map((cc) => ({
+          uuid: crypto.randomUUID(),
+          collectionId: idMap.get(cc.collectionId),
+          cardId: cc.cardId,
+          addedAt: cc.addedAt,
+        }))
+        .filter(
+          (cc): cc is typeof cc & { collectionId: number } => cc.collectionId != null,
+        )
       await db.customCollectionCards.bulkAdd(cardsToAdd)
     },
   )

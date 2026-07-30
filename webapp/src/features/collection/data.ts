@@ -1,4 +1,5 @@
 import { db, type CardCondition, type CardLanguage, type CollectionEntry } from '@/lib/db'
+import { tombstone } from '@/features/sync/tombstones'
 
 /** Suma de copias de una carta en la colección (todas las condiciones/idiomas). */
 export async function ownedQuantity(cardId: number): Promise<number> {
@@ -86,7 +87,7 @@ export async function addCardsToOwned(cardIds: number[]): Promise<number> {
  * Devuelve cuántas cartas se decrementaron.
  */
 export async function removeCardsFromOwned(cardIds: number[]): Promise<number> {
-  return db.transaction('rw', db.collection, async () => {
+  return db.transaction('rw', db.collection, db.syncTombstones, async () => {
     const now = Date.now()
     let processed = 0
     for (const cardId of cardIds) {
@@ -96,8 +97,12 @@ export async function removeCardsFromOwned(cardIds: number[]): Promise<number> {
         entries.find((e) => e.condition === 'Near Mint' && e.language === 'en') ??
         entries.reduce((a, b) => (b.quantity > a.quantity ? b : a))
       if (target.id == null) continue
-      if (target.quantity <= 1) await db.collection.delete(target.id)
-      else await db.collection.update(target.id, { quantity: target.quantity - 1, updatedAt: now })
+      if (target.quantity <= 1) {
+        await db.collection.delete(target.id)
+        await tombstone('collection', target.uuid)
+      } else {
+        await db.collection.update(target.id, { quantity: target.quantity - 1, updatedAt: now })
+      }
       processed++
     }
     return processed
@@ -107,6 +112,10 @@ export async function removeCardsFromOwned(cardIds: number[]): Promise<number> {
 /** Cambia la cantidad de una entrada; a 0 la elimina. */
 export async function setEntryQuantity(entry: CollectionEntry, quantity: number): Promise<void> {
   if (entry.id == null) return
-  if (quantity <= 0) await db.collection.delete(entry.id)
-  else await db.collection.update(entry.id, { quantity, updatedAt: Date.now() })
+  if (quantity <= 0) {
+    await db.collection.delete(entry.id)
+    await tombstone('collection', entry.uuid)
+  } else {
+    await db.collection.update(entry.id, { quantity, updatedAt: Date.now() })
+  }
 }

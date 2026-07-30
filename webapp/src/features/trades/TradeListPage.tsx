@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { ArrowLeft, Download, Link2, QrCode, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { removeFromTradeList, tradeListUnits, TRADE_LIST_MAX_UNITS } from './data'
+import { tombstone } from '@/features/sync/tombstones'
 import { shareUrlFor, encodeTradeList, MAX_SHARE_URL_LENGTH } from './share'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
@@ -100,6 +101,7 @@ export function TradeListPage() {
               onClick={async () => {
                 if (window.confirm(t('trades.deleteConfirm'))) {
                   await db.tradeLists.delete(listId)
+                  await tombstone('tradeLists', list.uuid)
                   navigate('/trades')
                 }
               }}

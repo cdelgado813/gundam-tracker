@@ -1,4 +1,5 @@
 import { db, type CollectionEntry, type CustomCollection, type TradeList, type WishlistList } from '@/lib/db'
+import { getRecentTombstones, pruneOldTombstones, type SyncedTableName } from './tombstones'
 
 /**
  * Payload sincronizado — distinto del de backup (`backup.ts`): aquí sí viaja `uuid`
@@ -7,9 +8,17 @@ import { db, type CollectionEntry, type CustomCollection, type TradeList, type W
  * `collectionId` local (que difiere entre dispositivos).
  */
 export interface SyncCustomCollectionCard {
+  uuid: string
   collectionUuid: string
   cardId: number
   addedAt: number
+}
+
+/** Borrado propagable; sin `id` (identidad puramente local en `syncTombstones`). */
+export interface SyncTombstoneWire {
+  table: SyncedTableName
+  key: string
+  deletedAt: number
 }
 
 export interface SyncPayload {
@@ -20,16 +29,19 @@ export interface SyncPayload {
   tradeLists: Omit<TradeList, 'id'>[]
   customCollections: Omit<CustomCollection, 'id'>[]
   customCollectionCards: SyncCustomCollectionCard[]
+  tombstones: SyncTombstoneWire[]
 }
 
 export async function buildSyncPayload(): Promise<SyncPayload> {
-  const [collection, wishlistLists, tradeLists, customCollections, customCollectionCards] =
+  await pruneOldTombstones()
+  const [collection, wishlistLists, tradeLists, customCollections, customCollectionCards, tombstones] =
     await Promise.all([
       db.collection.toArray(),
       db.wishlistLists.toArray(),
       db.tradeLists.toArray(),
       db.customCollections.toArray(),
       db.customCollectionCards.toArray(),
+      getRecentTombstones(),
     ])
   const uuidByCollectionId = new Map(customCollections.map((c) => [c.id!, c.uuid]))
   const strip = <T extends { id?: number }>(rows: T[]) => rows.map(({ id: _id, ...rest }) => rest)
@@ -43,10 +55,12 @@ export async function buildSyncPayload(): Promise<SyncPayload> {
     customCollections: strip(customCollections),
     customCollectionCards: customCollectionCards
       .map((cc) => ({
+        uuid: cc.uuid,
         collectionUuid: uuidByCollectionId.get(cc.collectionId),
         cardId: cc.cardId,
         addedAt: cc.addedAt,
       }))
       .filter((cc): cc is SyncCustomCollectionCard => cc.collectionUuid != null),
+    tombstones: tombstones.map(({ table, key, deletedAt }) => ({ table, key, deletedAt })),
   }
 }

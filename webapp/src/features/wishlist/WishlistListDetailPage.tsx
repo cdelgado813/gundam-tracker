@@ -5,6 +5,7 @@ import QRCode from 'qrcode'
 import { ArrowLeft, Download, Link2, ListChecks, QrCode, Star, Trash2, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { removeFromWishlistList, wishlistListUnits, WISHLIST_LIST_MAX_UNITS } from './data'
+import { tombstone } from '@/features/sync/tombstones'
 import { shareUrlFor, encodeWishlistList, MAX_SHARE_URL_LENGTH } from './share'
 import { useCardFilter } from '@/ui/CardListControls'
 import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
@@ -186,6 +187,7 @@ export function WishlistListDetailPage() {
               onClick={async () => {
                 if (window.confirm(t('trades.deleteConfirm'))) {
                   await db.wishlistLists.delete(listId)
+                  await tombstone('wishlistLists', list.uuid)
                   navigate('/wishlist')
                 }
               }}

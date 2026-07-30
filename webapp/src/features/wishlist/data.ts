@@ -1,4 +1,5 @@
 import { db, WISHLIST_LIST_MAX_UNITS, type WishlistList } from '@/lib/db'
+import { tombstone } from '@/features/sync/tombstones'
 
 export { WISHLIST_LIST_MAX_UNITS }
 
@@ -23,7 +24,9 @@ export async function renameWishlistList(listId: number, name: string): Promise<
 }
 
 export async function deleteWishlistList(listId: number): Promise<void> {
+  const list = await db.wishlistLists.get(listId)
   await db.wishlistLists.delete(listId)
+  await tombstone('wishlistLists', list?.uuid)
 }
 
 /**

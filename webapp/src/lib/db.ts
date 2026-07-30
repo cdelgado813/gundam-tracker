@@ -140,9 +140,25 @@ export interface CustomCollection {
 
 export interface CustomCollectionCard {
   id?: number
+  /** Identidad estable entre dispositivos (spec cross-device-sync); ajena al `id` local. */
+  uuid: string
   collectionId: number
   cardId: number
   addedAt: number
+}
+
+/**
+ * Registro de borrado para que la sincronización no resucite algo que ya se quitó
+ * en otro dispositivo (spec cross-device-sync): sin esto, `mergeTable` no puede
+ * distinguir "esto es nuevo, añádelo" de "esto se borró, no lo vuelvas a añadir".
+ */
+export interface SyncTombstone {
+  id?: number
+  /** Nombre de la tabla sincronizada a la que pertenecía la fila borrada. */
+  table: 'collection' | 'wishlistLists' | 'tradeLists' | 'customCollections' | 'customCollectionCards'
+  /** `uuid` de la fila borrada. */
+  key: string
+  deletedAt: number
 }
 
 export interface Backup {
@@ -164,6 +180,7 @@ export class GundamDB extends Dexie {
   backups!: EntityTable<Backup, 'id'>
   customCollections!: EntityTable<CustomCollection, 'id'>
   customCollectionCards!: EntityTable<CustomCollectionCard, 'id'>
+  syncTombstones!: EntityTable<SyncTombstone, 'id'>
 
   constructor() {
     super('gundam-tracker')
@@ -250,6 +267,22 @@ export class GundamDB extends Dexie {
             row.uuid = crypto.randomUUID()
           })
         }
+      })
+    // v6: `customCollectionCards` gana `uuid` (para poder tratarla igual que las
+    // otras 4 tablas sincronizadas, sin casos especiales) y `syncTombstones` — sin
+    // esto, borrar algo y sincronizar lo hacía reaparecer (spec cross-device-sync).
+    this.version(6)
+      .stores({
+        customCollectionCards: '++id, collectionId, cardId, [collectionId+cardId], &uuid',
+        syncTombstones: '++id, [table+key], deletedAt',
+      })
+      .upgrade(async (tx) => {
+        await tx
+          .table('customCollectionCards')
+          .toCollection()
+          .modify((row: { uuid?: string }) => {
+            row.uuid = crypto.randomUUID()
+          })
       })
   }
 }
