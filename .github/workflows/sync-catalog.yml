@@ -2,15 +2,25 @@ name: Sync Gundam catalog
 
 on:
   schedule:
-    - cron: '17 3 * * *' # diario, 03:17 UTC
+    - cron: '17 */6 * * *' # cada 6 horas (03:17, 09:17, 15:17, 21:17 UTC)
   workflow_dispatch:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
+
+# Mismo grupo que deploy.yml: si un despliegue por código y uno por datos coinciden,
+# se encolan en vez de pisarse.
+concurrency:
+  group: pages
+  cancel-in-progress: false
 
 jobs:
   sync:
     runs-on: ubuntu-latest
+    outputs:
+      changed: ${{ steps.commit.outputs.changed }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -21,10 +31,47 @@ jobs:
           CARDTRADER_JWT: ${{ secrets.CARDTRADER_JWT }}
         run: node scripts/sync-catalog.mjs
       - name: Commit updated data
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add webapp/public/data
-          # sin [skip ci]: este push debe disparar el workflow de deploy
-          git diff --staged --quiet || git commit -m "Sync Gundam catalog data"
+          if git diff --staged --quiet; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          git commit -m "Sync Gundam catalog data"
+          # por si un sync manual y uno programado coinciden (ver historial de runs):
+          # se reintenta una vez con rebase antes de rendirse.
+          git pull --rebase
           git push
+          echo "changed=true" >> "$GITHUB_OUTPUT"
+
+  # Un push hecho con el GITHUB_TOKEN de este workflow NO dispara deploy.yml (GitHub
+  # bloquea a propósito esa cascada para evitar bucles infinitos) — así que el
+  # despliegue se hace aquí mismo, en el mismo run, solo cuando hubo datos nuevos.
+  deploy:
+    needs: sync
+    if: needs.sync.outputs.changed == 'true'
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: webapp/package-lock.json
+      - run: npm ci
+        working-directory: webapp
+      - run: npm run build
+        working-directory: webapp
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: webapp/dist
+      - id: deployment
+        uses: actions/deploy-pages@v4
