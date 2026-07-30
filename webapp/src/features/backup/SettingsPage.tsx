@@ -1,10 +1,11 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CodeXml, Folder, RotateCw, Upload, Download as DownloadIcon } from 'lucide-react'
+import { CodeXml, Folder, RotateCw, Share, Smartphone, Upload, Download as DownloadIcon } from 'lucide-react'
 import { db } from '@/lib/db'
 import { fetchStaticMeta, type StaticMeta } from '@/lib/staticData'
 import { useCatalogSync } from '@/features/catalog/sync'
+import { useInstallPrompt } from '@/lib/useInstallPrompt'
 import { CustomCollectionsManager } from '@/features/collections/CustomCollectionsManager'
 import {
   buildBackupPayload,
@@ -36,6 +37,7 @@ export function SettingsPage() {
   const language = useUiLanguage((s) => s.language)
   const setLanguage = useUiLanguage((s) => s.setLanguage)
   const sync = useCatalogSync()
+  const install = useInstallPrompt()
   const backups = useLiveQuery(() => db.backups.orderBy('createdAt').reverse().toArray()) ?? []
   const [folderName, setFolderName] = useState<string | null>(null)
   const [meta, setMeta] = useState<StaticMeta | null>(null)
@@ -86,6 +88,25 @@ export function SettingsPage() {
   return (
     <div className="mx-auto flex max-w-2xl flex-col gap-4 p-4">
       <h1 className="font-display text-xl font-bold tracking-widest text-hangar-100">{t('settings.title')}</h1>
+
+      {!install.installed && (install.canPromptInstall || install.isIos) && (
+        <Section title={t('settings.install')}>
+          {install.canPromptInstall ? (
+            <>
+              <p className="mb-3 text-xs text-hangar-300">{t('settings.installHint')}</p>
+              <Button onClick={() => void install.install()} className="gap-1.5">
+                <Smartphone size={14} />
+                {t('settings.installButton')}
+              </Button>
+            </>
+          ) : (
+            <p className="flex items-start gap-2 text-xs text-hangar-300">
+              <Share size={14} className="mt-0.5 shrink-0" />
+              {t('settings.installIosHint')}
+            </p>
+          )}
+        </Section>
+      )}
 
       <Section title={t('settings.language')}>
         <p className="mb-3 text-xs text-hangar-300">{t('settings.languageHint')}</p>

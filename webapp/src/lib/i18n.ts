@@ -235,6 +235,12 @@ const es = {
   'settings.exportImport': 'Exportar / importar',
   'settings.exportJson': 'Exportar JSON',
   'settings.importJson': 'Importar JSON',
+  'settings.install': 'Instalar la app',
+  'settings.installHint':
+    'Instálala en este dispositivo para abrirla como una app, con icono propio y sin la barra del navegador.',
+  'settings.installButton': 'Instalar app',
+  'settings.installIosHint':
+    'En iPhone/iPad, Apple no permite instalar desde un botón: toca el icono de Compartir de Safari y elige «Añadir a pantalla de inicio».',
   'settings.support': 'Apoya el proyecto',
   'settings.supportHint':
     'Gundam Tracker es gratis y seguirá siéndolo. Si te resulta útil, puedes invitarme a un café — totalmente opcional.',
@@ -516,6 +522,12 @@ const en: Record<TranslationKey, string> = {
   'settings.exportImport': 'Export / import',
   'settings.exportJson': 'Export JSON',
   'settings.importJson': 'Import JSON',
+  'settings.install': 'Install the app',
+  'settings.installHint':
+    'Install it on this device to open it like an app, with its own icon and no browser bar.',
+  'settings.installButton': 'Install app',
+  'settings.installIosHint':
+    "On iPhone/iPad, Apple doesn't allow installing from a button: tap Safari's Share icon and choose \"Add to Home Screen\".",
   'settings.support': 'Support the project',
   'settings.supportHint':
     "Gundam Tracker is free and will stay that way. If you find it useful, you can buy me a coffee — entirely optional.",
@@ -796,6 +808,12 @@ const ca: Record<TranslationKey, string> = {
   'settings.exportImport': 'Exporta / importa',
   'settings.exportJson': 'Exporta JSON',
   'settings.importJson': 'Importa JSON',
+  'settings.install': 'Instal·la l’app',
+  'settings.installHint':
+    'Instal·la-la en aquest dispositiu per obrir-la com una app, amb icona pròpia i sense la barra del navegador.',
+  'settings.installButton': 'Instal·la l’app',
+  'settings.installIosHint':
+    'A iPhone/iPad, Apple no permet instal·lar des d’un botó: toca la icona de Compartir de Safari i tria «Afegeix a l’inici».',
   'settings.support': 'Dona suport al projecte',
   'settings.supportHint':
     'Gundam Tracker és gratuït i ho continuarà sent. Si et resulta útil, em pots convidar a un cafè — totalment opcional.',
