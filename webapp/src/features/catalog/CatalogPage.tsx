@@ -10,6 +10,7 @@ import { RarityFilterChips } from './RarityFilterChips'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
+import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
 
 function SyncBanner() {
   const t = useT()
@@ -83,6 +84,7 @@ function SyncBanner() {
 function CardResults({
   query,
   rarities,
+  ownership,
   selecting,
   selectedIds,
   onToggleSelect,
@@ -90,6 +92,7 @@ function CardResults({
 }: {
   query: string
   rarities: Set<string>
+  ownership: OwnershipFilterValue
   selecting: boolean
   selectedIds: Set<number>
   onToggleSelect: (cardId: number) => void
@@ -125,7 +128,11 @@ function CardResults({
 
       return rarities.size > 0 ? matches.filter((c) => rarities.has(c.rarity)) : matches
     }, [query, rarities]) ?? []
-  const results = allMatches.slice(0, MAX_RESULTS)
+  const ownershipMatches =
+    ownership === 'all'
+      ? allMatches
+      : allMatches.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
+  const results = ownershipMatches.slice(0, MAX_RESULTS)
 
   if (results.length === 0)
     return (
@@ -146,9 +153,9 @@ function CardResults({
           {allResultsSelected ? t('common.selectNone') : t('catalog.selectN', { n: results.length })}
         </button>
       )}
-      {allMatches.length > MAX_RESULTS && (
+      {ownershipMatches.length > MAX_RESULTS && (
         <p className="mb-2 text-xs text-hangar-300">
-          {t('catalog.truncated', { max: MAX_RESULTS, total: allMatches.length })}
+          {t('catalog.truncated', { max: MAX_RESULTS, total: ownershipMatches.length })}
         </p>
       )}
       <div className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
@@ -185,6 +192,7 @@ export function CatalogPage() {
   }
   const setQuery = (q: string) => updateFilters(q, selectedRarities)
   const setSelectedRarities = (r: Set<string>) => updateFilters(query, r)
+  const [ownership, setOwnership] = useState<OwnershipFilterValue>('all')
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
@@ -276,11 +284,17 @@ export function CatalogPage() {
       )}
 
       <RarityFilterChips selected={selectedRarities} onChange={setSelectedRarities} />
+      {showingResults && (
+        <div className="mb-3">
+          <OwnershipFilter value={ownership} onChange={setOwnership} />
+        </div>
+      )}
 
       {showingResults ? (
         <CardResults
           query={query.trim()}
           rarities={selectedRarities}
+          ownership={ownership}
           selecting={selecting}
           selectedIds={selectedIds}
           onToggleSelect={toggleSelect}

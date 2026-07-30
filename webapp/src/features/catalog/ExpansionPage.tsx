@@ -6,6 +6,7 @@ import { db } from '@/lib/db'
 import { useT } from '@/lib/useT'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
+import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 
@@ -17,7 +18,7 @@ export function ExpansionPage() {
   // atenuación de faltantes, progreso y filtro «solo faltantes» viven solo ahí.
   const dimMissing = searchParams.get('from') === 'collection'
   const expansionId = Number(id)
-  const [onlyMissing, setOnlyMissing] = useState(false)
+  const [ownership, setOwnership] = useState<OwnershipFilterValue>('all')
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
@@ -38,7 +39,10 @@ export function ExpansionPage() {
     return () => clearTimeout(timer)
   }, [toast])
 
-  const visible = onlyMissing ? filtered.filter((c) => !(owned.get(c.id) ?? 0)) : filtered
+  const visible =
+    ownership === 'all'
+      ? filtered
+      : filtered.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
 
@@ -115,16 +119,10 @@ export function ExpansionPage() {
           </div>
         )}
         <div className="mt-3">{controls}</div>
-        {dimMissing && (
-          <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
-            <input
-              type="checkbox"
-              checked={onlyMissing}
-              onChange={(e) => setOnlyMissing(e.target.checked)}
-              className="accent-zeon-500"
-            />
-            {t('common.onlyMissing')}
-          </label>
+        {cards.length > 0 && (
+          <div className="mt-2">
+            <OwnershipFilter value={ownership} onChange={setOwnership} />
+          </div>
         )}
       </header>
 

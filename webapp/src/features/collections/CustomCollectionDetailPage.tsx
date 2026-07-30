@@ -5,6 +5,7 @@ import { ArrowLeft, ListChecks, Trash2, X } from 'lucide-react'
 import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
+import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
 import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
@@ -20,7 +21,7 @@ export function CustomCollectionDetailPage() {
   const { id } = useParams()
   const navigate = useNavigate()
   const collectionId = Number(id)
-  const [onlyMissing, setOnlyMissing] = useState(false)
+  const [ownership, setOwnership] = useState<OwnershipFilterValue>('all')
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [toast, setToast] = useState<string | null>(null)
@@ -46,7 +47,10 @@ export function CustomCollectionDetailPage() {
 
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
-  const visible = onlyMissing ? filtered.filter((c) => !(owned.get(c.id) ?? 0)) : filtered
+  const visible =
+    ownership === 'all'
+      ? filtered
+      : filtered.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
   const colors = collectionColorClasses[collection.color]
 
   const toggleSelect = (cardId: number) => {
@@ -137,15 +141,9 @@ export function CustomCollectionDetailPage() {
         {cards.length > 0 && (
           <>
             <div className="mt-3">{controls}</div>
-            <label className="flex w-fit cursor-pointer items-center gap-2 text-sm text-hangar-300">
-              <input
-                type="checkbox"
-                checked={onlyMissing}
-                onChange={(e) => setOnlyMissing(e.target.checked)}
-                className="accent-zeon-500"
-              />
-              {t('common.onlyMissing')}
-            </label>
+            <div className="mt-2">
+              <OwnershipFilter value={ownership} onChange={setOwnership} />
+            </div>
           </>
         )}
       </header>

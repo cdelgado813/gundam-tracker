@@ -7,10 +7,12 @@ import { db, type Card } from '@/lib/db'
 import { removeFromWishlistList, wishlistListUnits, WISHLIST_LIST_MAX_UNITS } from './data'
 import { shareUrlFor, encodeWishlistList, MAX_SHARE_URL_LENGTH } from './share'
 import { useCardFilter } from '@/ui/CardListControls'
+import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
 import { formatCents } from '@/features/catalog/prices'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
+import { useOwnedMap } from '@/features/catalog/hooks'
 
 type SortKey = 'name' | 'expansion' | 'price'
 
@@ -21,6 +23,7 @@ export function WishlistListDetailPage() {
   const listId = Number(id)
   const list = useLiveQuery(() => db.wishlistLists.get(listId), [listId])
   const [sort, setSort] = useState<SortKey>('name')
+  const [ownership, setOwnership] = useState<OwnershipFilterValue>('all')
   const [selecting, setSelecting] = useState(false)
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set())
   const [qr, setQr] = useState<string | null>(null)
@@ -46,6 +49,7 @@ export function WishlistListDetailPage() {
   )
   const { filtered, controls } = useCardFilter(cards)
   const filteredIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered])
+  const owned = useOwnedMap()
 
   useEffect(() => {
     if (!toast) return
@@ -57,6 +61,10 @@ export function WishlistListDetailPage() {
 
   const visible = resolved
     .filter((x) => x.card == null || filteredIds.has(x.card.id))
+    .filter((x) => {
+      if (ownership === 'all' || x.card == null) return true
+      return (ownership === 'owned') === (owned.get(x.card.id) ?? 0) > 0
+    })
     .sort((a, b) => {
       if (sort === 'name') return (a.card?.name ?? '').localeCompare(b.card?.name ?? '')
       if (sort === 'expansion') return a.expansionName.localeCompare(b.expansionName)
@@ -211,6 +219,11 @@ export function WishlistListDetailPage() {
             <option value="expansion">{t('wishlist.sortExpansion')}</option>
             <option value="price">{t('wishlist.sortPrice')}</option>
           </select>
+        </div>
+      )}
+      {resolved.length > 0 && (
+        <div className="mb-3">
+          <OwnershipFilter value={ownership} onChange={setOwnership} />
         </div>
       )}
 
