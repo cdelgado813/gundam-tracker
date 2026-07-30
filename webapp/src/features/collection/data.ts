@@ -27,6 +27,7 @@ export async function addToCollection(
       })
     } else {
       await db.collection.add({
+        uuid: crypto.randomUUID(),
         cardId,
         expansionId,
         quantity,
@@ -62,6 +63,7 @@ export async function addCardsToOwned(cardIds: number[]): Promise<number> {
         })
       } else {
         await db.collection.add({
+          uuid: crypto.randomUUID(),
           cardId: card.id,
           expansionId: card.expansionId,
           quantity: 1,

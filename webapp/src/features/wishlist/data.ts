@@ -9,6 +9,7 @@ export function wishlistListUnits(list: WishlistList): number {
 export async function createWishlistList(name: string): Promise<number> {
   const now = Date.now()
   return (await db.wishlistLists.add({
+    uuid: crypto.randomUUID(),
     name,
     items: [],
     kind: 'own',

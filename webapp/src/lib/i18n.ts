@@ -296,6 +296,27 @@ const es = {
   // Apoyo (Buy Me a Coffee)
   'support.bmcAlt': 'Invítame a un café en Buy Me a Coffee',
 
+  // Sincronización entre dispositivos
+  'sync.title': 'Sincronizar entre dispositivos',
+  'sync.hint':
+    'Vincula este dispositivo con otro para tener la misma colección, wishlist y listas en ambos. Tus datos viajan cifrados; el servidor nunca los ve en claro.',
+  'sync.generateQr': 'Vincular dispositivo',
+  'sync.scanQr': 'Escanear código',
+  'sync.showQrHint': 'Escanea este código desde el otro dispositivo, en Ajustes → Sincronizar.',
+  'sync.qrAlt': 'Código de emparejamiento',
+  'sync.active': 'Sincronización activa',
+  'sync.syncingNow': 'Sincronizando…',
+  'sync.reconcileHint':
+    'Ambos dispositivos ya tenían datos propios. ¿Cómo quieres combinarlos?',
+  'sync.useThisDevice': 'Usar este dispositivo',
+  'sync.useOtherDevice': 'Usar el otro dispositivo',
+  'sync.combine': 'Combinar ambos',
+  'sync.forget': 'Olvidar este dispositivo',
+  'sync.pairError': 'No se pudo completar el emparejamiento.',
+  'sync.cameraError': 'No se pudo acceder a la cámara. Revisa los permisos del navegador.',
+  'sync.scanHint': 'Apunta la cámara al código QR del otro dispositivo.',
+  'sync.restoredAfterExpiry': 'Sincronización restablecida tras un tiempo sin usarse; se combinaron los cambios de ambos dispositivos.',
+
   'about.noServer': 'Sin servidor propio',
   'about.noServerBody':
     'El catálogo y los precios se sincronizan periódicamente desde CardTrader y se publican como datos estáticos junto con el sitio.',
@@ -578,6 +599,25 @@ const en: Record<TranslationKey, string> = {
   'landing.localBody': 'Your collection, wishlist, and trade lists live only on this device.',
 
   'support.bmcAlt': 'Buy me a coffee on Buy Me a Coffee',
+
+  'sync.title': 'Sync between devices',
+  'sync.hint':
+    "Link this device with another to keep the same collection, wishlist, and lists on both. Your data travels encrypted; the server never sees it in the clear.",
+  'sync.generateQr': 'Link device',
+  'sync.scanQr': 'Scan code',
+  'sync.showQrHint': 'Scan this code from the other device, in Settings → Sync.',
+  'sync.qrAlt': 'Pairing code',
+  'sync.active': 'Sync active',
+  'sync.syncingNow': 'Syncing…',
+  'sync.reconcileHint': 'Both devices already had their own data. How do you want to combine them?',
+  'sync.useThisDevice': 'Use this device',
+  'sync.useOtherDevice': 'Use the other device',
+  'sync.combine': 'Combine both',
+  'sync.forget': 'Forget this device',
+  'sync.pairError': 'Pairing could not be completed.',
+  'sync.cameraError': "Couldn't access the camera. Check your browser permissions.",
+  'sync.scanHint': "Point the camera at the other device's QR code.",
+  'sync.restoredAfterExpiry': "Sync restored after a while unused; changes from both devices were combined.",
 
   'about.noServer': 'No server of our own',
   'about.noServerBody':
@@ -865,6 +905,26 @@ const ca: Record<TranslationKey, string> = {
   'landing.localBody': 'La teva col·lecció, wishlist i llistes d’intercanvi viuen només en aquest dispositiu.',
 
   'support.bmcAlt': 'Convida’m a un cafè a Buy Me a Coffee',
+
+  'sync.title': 'Sincronitza entre dispositius',
+  'sync.hint':
+    'Vincula aquest dispositiu amb un altre per tenir la mateixa col·lecció, wishlist i llistes als dos. Les teves dades viatgen xifrades; el servidor no les veu mai en clar.',
+  'sync.generateQr': 'Vincula dispositiu',
+  'sync.scanQr': 'Escaneja codi',
+  'sync.showQrHint': 'Escaneja aquest codi des de l’altre dispositiu, a Configuració → Sincronitza.',
+  'sync.qrAlt': 'Codi d’emparellament',
+  'sync.active': 'Sincronització activa',
+  'sync.syncingNow': 'Sincronitzant…',
+  'sync.reconcileHint': 'Tots dos dispositius ja tenien dades pròpies. Com vols combinar-les?',
+  'sync.useThisDevice': 'Usa aquest dispositiu',
+  'sync.useOtherDevice': 'Usa l’altre dispositiu',
+  'sync.combine': 'Combina els dos',
+  'sync.forget': 'Oblida aquest dispositiu',
+  'sync.pairError': 'No s’ha pogut completar l’emparellament.',
+  'sync.cameraError': 'No s’ha pogut accedir a la càmera. Revisa els permisos del navegador.',
+  'sync.scanHint': 'Apunta la càmera al codi QR de l’altre dispositiu.',
+  'sync.restoredAfterExpiry':
+    'Sincronització restablerta després d’un temps sense usar-se; s’han combinat els canvis dels dos dispositius.',
 
   'about.noServer': 'Sense servidor propi',
   'about.noServerBody':

@@ -52,6 +52,7 @@ export function ImportTradePage() {
   const save = async () => {
     const now = Date.now()
     const id = await db.tradeLists.add({
+      uuid: crypto.randomUUID(),
       name: list.name,
       authorAlias: list.alias,
       items: list.items,

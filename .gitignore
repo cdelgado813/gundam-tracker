@@ -2,6 +2,7 @@ node_modules/
 dist/
 dev-dist/
 *.local
+.wrangler/
 
 # credenciales: nunca al repo (la colección Postman lleva el JWT embebido)
 jwt.json

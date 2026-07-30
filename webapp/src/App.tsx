@@ -23,8 +23,10 @@ import { SettingsPage } from '@/features/backup/SettingsPage'
 import { AboutPage } from '@/features/about/AboutPage'
 import { WelcomeBanner } from '@/features/about/WelcomeBanner'
 import { installAutoBackup } from '@/features/backup/backup'
+import { installDeviceSync, useDeviceSync } from '@/features/sync/useDeviceSync'
 
 installAutoBackup()
+installDeviceSync()
 
 const tabs: { to: string; labelKey: TranslationKey; Icon: typeof LayoutGrid; prefixes: string[] }[] = [
   { to: '/', labelKey: 'nav.catalog', Icon: LayoutGrid, prefixes: ['/', '/expansion'] },
@@ -105,13 +107,15 @@ function App() {
   const initListViewMode = useListViewMode((s) => s.init)
   const initWelcomeSeen = useWelcomeSeen((s) => s.init)
   const welcomeSeen = useWelcomeSeen((s) => s.seen)
+  const initDeviceSync = useDeviceSync((s) => s.init)
   useSyncHtmlLang()
 
   useEffect(() => {
     void initLanguage()
     void initListViewMode()
     void initWelcomeSeen()
-  }, [initLanguage, initListViewMode, initWelcomeSeen])
+    void initDeviceSync()
+  }, [initLanguage, initListViewMode, initWelcomeSeen, initDeviceSync])
 
   // Mientras se carga la preferencia no se pinta nada (evita parpadeo bienvenida→app);
   // el hash de la URL (p. ej. un enlace compartido) no se pierde: HashRouter aún no

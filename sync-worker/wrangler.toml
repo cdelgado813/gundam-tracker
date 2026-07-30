@@ -1,0 +1,18 @@
+name = "gundam-tracker-sync"
+main = "src/index.ts"
+compatibility_date = "2026-01-01"
+
+# Relay ciego para cross-device-sync (openspec/specs/cross-device-sync): solo
+# almacena {iv, ciphertext} bajo un id aleatorio, nunca ve datos en claro,
+# nunca expone un listado. Ver design.md del cambio para el porqué.
+
+[[kv_namespaces]]
+binding = "SYNC_KV"
+id = "2a43c6bc37a94f768b304a20386ccfbf"
+
+[vars]
+# Orígenes desde los que se acepta CORS; coma-separado. En local, el puerto
+# por defecto de `vite dev` y de `vite preview`.
+ALLOWED_ORIGINS = "http://localhost:5173,http://localhost:4173,https://gundam.poordevelopers.com"
+TTL_SECONDS = "7776000"
+MAX_BODY_BYTES = "2097152"

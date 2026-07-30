@@ -9,6 +9,7 @@ export function tradeListUnits(list: TradeList): number {
 export async function createTradeList(name: string): Promise<number> {
   const now = Date.now()
   return (await db.tradeLists.add({
+    uuid: crypto.randomUUID(),
     name,
     items: [],
     kind: 'own',

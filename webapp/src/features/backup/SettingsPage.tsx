@@ -7,6 +7,9 @@ import { fetchStaticMeta, type StaticMeta } from '@/lib/staticData'
 import { useCatalogSync } from '@/features/catalog/sync'
 import { useInstallPrompt } from '@/lib/useInstallPrompt'
 import { CustomCollectionsManager } from '@/features/collections/CustomCollectionsManager'
+import { DeviceSyncSection } from '@/features/sync/DeviceSyncSection'
+import { useDeviceSync } from '@/features/sync/useDeviceSync'
+import { syncConfigured } from '@/features/sync/client'
 import {
   buildBackupPayload,
   chooseBackupFolder,
@@ -45,6 +48,7 @@ export function SettingsPage() {
   const [importError, setImportError] = useState<string | null>(null)
   const [msg, setMsg] = useState<string | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+  const syncToast = useDeviceSync((s) => s.toast)
 
   useEffect(() => {
     void getBackupFolderName().then(setFolderName)
@@ -52,6 +56,10 @@ export function SettingsPage() {
       .then(setMeta)
       .catch(() => setMeta(null))
   }, [])
+
+  useEffect(() => {
+    if (syncToast === 'sync.restoredAfterExpiry') setMsg(t('sync.restoredAfterExpiry'))
+  }, [syncToast, t])
 
   useEffect(() => {
     if (!msg) return
@@ -155,6 +163,12 @@ export function SettingsPage() {
         <p className="mb-3 text-xs text-hangar-300">{t('settings.customCollectionsHint')}</p>
         <CustomCollectionsManager />
       </Section>
+
+      {syncConfigured() && (
+        <Section title={t('sync.title')}>
+          <DeviceSyncSection />
+        </Section>
+      )}
 
       <Section title={t('settings.backups')}>
         <p className="text-xs text-hangar-300">{t('settings.backupsHint')}</p>

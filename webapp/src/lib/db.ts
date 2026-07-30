@@ -69,6 +69,8 @@ export interface PriceCache {
 
 export interface CollectionEntry {
   id?: number
+  /** Identidad estable entre dispositivos (spec cross-device-sync); ajena al `id` local. */
+  uuid: string
   cardId: number
   expansionId: number
   quantity: number
@@ -86,6 +88,8 @@ export interface TradeListItem {
 
 export interface TradeList {
   id?: number
+  /** Identidad estable entre dispositivos (spec cross-device-sync); ajena al `id` local. */
+  uuid: string
   name: string
   /** alias del autor incluido al compartir (opcional) */
   authorAlias?: string
@@ -103,6 +107,8 @@ export interface WishlistListItem {
 
 export interface WishlistList {
   id?: number
+  /** Identidad estable entre dispositivos (spec cross-device-sync); ajena al `id` local. */
+  uuid: string
   name: string
   /** alias del autor incluido al compartir (opcional) */
   authorAlias?: string
@@ -124,6 +130,8 @@ export type CustomCollectionColor = (typeof CUSTOM_COLLECTION_COLORS)[number]
 
 export interface CustomCollection {
   id?: number
+  /** Identidad estable entre dispositivos (spec cross-device-sync); ajena al `id` local. */
+  uuid: string
   name: string
   color: CustomCollectionColor
   createdAt: number
@@ -206,6 +214,9 @@ export class GundamDB extends Dexie {
           const quantity = Math.max(1, entry.desiredQuantity || 1)
           if (!current || currentUnits + quantity > WISHLIST_LIST_MAX_UNITS) {
             current = {
+              // Se sobrescribe en la propia migración v5 (uuid llegó una versión
+              // después); se rellena ya aquí solo para satisfacer el tipo.
+              uuid: crypto.randomUUID(),
               name: listIndex === 1 ? 'Mi wishlist' : `Mi wishlist ${listIndex}`,
               items: [],
               kind: 'own',
@@ -221,6 +232,24 @@ export class GundamDB extends Dexie {
         }
 
         await tx.table('wishlistLists').bulkAdd(lists)
+      })
+    // v5: `uuid` estable por fila en las tablas sincronizables (spec cross-device-sync
+    // design D6) — identidad que sobrevive a que cada dispositivo tenga su propio `id`
+    // local autoincremental. Se añade como índice único y se rellena en filas existentes.
+    this.version(5)
+      .stores({
+        collection: '++id, cardId, expansionId, [cardId+condition+language], &uuid',
+        wishlistLists: '++id, kind, updatedAt, &uuid',
+        tradeLists: '++id, kind, updatedAt, &uuid',
+        customCollections: '++id, name, &uuid',
+      })
+      .upgrade(async (tx) => {
+        const tables = ['collection', 'wishlistLists', 'tradeLists', 'customCollections'] as const
+        for (const name of tables) {
+          await tx.table(name).toCollection().modify((row: { uuid?: string }) => {
+            row.uuid = crypto.randomUUID()
+          })
+        }
       })
   }
 }

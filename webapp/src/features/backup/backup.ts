@@ -100,14 +100,20 @@ export async function buildBackupPayload(): Promise<BackupPayload> {
       db.customCollections.toArray(),
       db.customCollectionCards.toArray(),
     ])
-  const strip = <T extends { id?: number }>(rows: T[]) =>
-    rows.map(({ id: _id, ...rest }) => rest)
+  // `uuid` es identidad interna para cross-device-sync, no forma parte del fichero
+  // de backup descargable (design.md D6): se descarta al exportar, y se genera de
+  // nuevo por fila al importar (ver restoreBackup).
+  const strip = <T extends { id?: number; uuid?: string }>(rows: T[]) =>
+    rows.map(({ id: _id, uuid: _uuid, ...rest }) => rest)
   return {
     schemaVersion: BACKUP_SCHEMA_VERSION,
     exportedAt: Date.now(),
     // customCollections SÍ conserva su id: customCollectionCards lo referencia
     // como collectionId y se remapea al restaurar (ver restoreBackup).
-    customCollections: customCollections.map((c) => ({ ...c, id: c.id! })),
+    customCollections: customCollections.map((c) => {
+      const { uuid: _uuid, ...rest } = c
+      return { ...rest, id: c.id! }
+    }),
     customCollectionCards: strip(customCollectionCards).map((cc) => ({
       collectionId: cc.collectionId,
       cardId: cc.cardId,
@@ -151,15 +157,20 @@ export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'm
           db.customCollectionCards.clear(),
         ])
       }
-      await db.collection.bulkAdd(payload.collection)
-      await db.wishlistLists.bulkAdd(payload.wishlistLists)
-      await db.tradeLists.bulkAdd(payload.tradeLists)
+      // El uuid es interno (identidad para cross-device-sync); el fichero de backup no lo
+      // lleva, así que cada fila importada recibe uno nuevo al restaurar.
+      await db.collection.bulkAdd(payload.collection.map((c) => ({ ...c, uuid: crypto.randomUUID() })))
+      await db.wishlistLists.bulkAdd(
+        payload.wishlistLists.map((w) => ({ ...w, uuid: crypto.randomUUID() })),
+      )
+      await db.tradeLists.bulkAdd(payload.tradeLists.map((t) => ({ ...t, uuid: crypto.randomUUID() })))
 
       // Los ids de customCollections del backup son locales a ese export: se crean filas
       // nuevas y se remapea id antiguo -> id nuevo para reconstruir customCollectionCards.
       const idMap = new Map<number, number>()
       for (const c of payload.customCollections) {
         const newId = (await db.customCollections.add({
+          uuid: crypto.randomUUID(),
           name: c.name,
           color: c.color,
           createdAt: c.createdAt,

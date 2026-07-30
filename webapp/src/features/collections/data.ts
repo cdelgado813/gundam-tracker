@@ -5,7 +5,13 @@ export async function createCustomCollection(
   color: CustomCollectionColor,
 ): Promise<number> {
   const now = Date.now()
-  return (await db.customCollections.add({ name, color, createdAt: now, updatedAt: now })) as number
+  return (await db.customCollections.add({
+    uuid: crypto.randomUUID(),
+    name,
+    color,
+    createdAt: now,
+    updatedAt: now,
+  })) as number
 }
 
 export async function renameCustomCollection(id: number, name: string): Promise<void> {
