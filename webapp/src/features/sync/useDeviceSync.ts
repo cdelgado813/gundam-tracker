@@ -63,6 +63,12 @@ export const useDeviceSync = create<DeviceSyncState>((set, get) => ({
     if (stored) {
       const pairing = await importPairingFromStorage(stored)
       set({ pairing, loaded: true })
+      // Sincroniza en cuanto se carga un emparejamiento existente, al abrir la app —
+      // si no, no se ve nada nuevo hasta el próximo cambio local, el intervalo
+      // periódico (30 min) o un cambio de pestaña. `installDeviceSync()` corre a
+      // nivel de módulo, antes de que `init()` resuelva, así que su propio intento
+      // de sincronizar al arrancar siempre encuentra `pairing` a `null` y no hace nada.
+      void get().syncNow()
     } else {
       set({ loaded: true })
     }
@@ -209,10 +215,13 @@ export function installDeviceSync(): void {
     if (useDeviceSync.getState().pairing) void useDeviceSync.getState().syncNow()
   }
 
+  // Nota: no se llama aquí al arrancar — `installDeviceSync()` corre a nivel de
+  // módulo, antes de que `useDeviceSync.init()` cargue el emparejamiento guardado,
+  // así que en ese instante `pairing` siempre es `null`. El primer intento real de
+  // sincronizar al abrir la app lo dispara `init()` en cuanto termina de cargar.
   if (pullTimer) clearInterval(pullTimer)
   pullTimer = setInterval(pullIfPaired, PULL_INTERVAL_MS)
   document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') pullIfPaired()
   })
-  pullIfPaired()
 }
