@@ -16,6 +16,7 @@ import {
   type BackupPayload,
 } from './backup'
 import { Button } from '@/ui/Button'
+import { DonateButton } from '@/ui/DonateButton'
 import { useT, useUiLanguage } from '@/lib/useT'
 import { UI_LANGUAGES } from '@/lib/i18n'
 
@@ -204,6 +205,11 @@ export function SettingsPage() {
           />
         </div>
         {importError && <p className="mt-2 text-sm text-zeon-400">{importError}</p>}
+      </Section>
+
+      <Section title={t('settings.support')}>
+        <p className="mb-3 text-xs text-hangar-300">{t('settings.supportHint')}</p>
+        <DonateButton />
       </Section>
 
       <Section title={t('settings.project')}>

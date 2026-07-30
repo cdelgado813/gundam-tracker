@@ -4,7 +4,9 @@ import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
 import { useT, useSyncHtmlLang, useUiLanguage } from '@/lib/useT'
 import { useScrollRestoration, clearRememberedScroll } from '@/lib/useScrollRestoration'
 import { useListViewMode } from '@/lib/useListViewMode'
+import { useWelcomeSeen } from '@/lib/useWelcomeSeen'
 import { ScrollEdgeButtons } from '@/ui/ScrollEdgeButtons'
+import { LandingPage } from '@/features/landing/LandingPage'
 import type { TranslationKey } from '@/lib/i18n'
 import { CatalogPage } from '@/features/catalog/CatalogPage'
 import { ExpansionPage } from '@/features/catalog/ExpansionPage'
@@ -101,12 +103,21 @@ function Shell() {
 function App() {
   const initLanguage = useUiLanguage((s) => s.init)
   const initListViewMode = useListViewMode((s) => s.init)
+  const initWelcomeSeen = useWelcomeSeen((s) => s.init)
+  const welcomeSeen = useWelcomeSeen((s) => s.seen)
   useSyncHtmlLang()
 
   useEffect(() => {
     void initLanguage()
     void initListViewMode()
-  }, [initLanguage, initListViewMode])
+    void initWelcomeSeen()
+  }, [initLanguage, initListViewMode, initWelcomeSeen])
+
+  // Mientras se carga la preferencia no se pinta nada (evita parpadeo bienvenida→app);
+  // el hash de la URL (p. ej. un enlace compartido) no se pierde: HashRouter aún no
+  // se ha montado y lo lee tal cual esté al pulsar "Entrar" (design D1).
+  if (welcomeSeen === undefined) return null
+  if (welcomeSeen === false) return <LandingPage />
 
   return (
     <HashRouter>

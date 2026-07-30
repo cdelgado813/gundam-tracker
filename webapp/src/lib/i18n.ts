@@ -235,6 +235,9 @@ const es = {
   'settings.exportImport': 'Exportar / importar',
   'settings.exportJson': 'Exportar JSON',
   'settings.importJson': 'Importar JSON',
+  'settings.support': 'Apoya el proyecto',
+  'settings.supportHint':
+    'Gundam Tracker es gratis y seguirá siéndolo. Si te resulta útil, puedes invitarme a un café — totalmente opcional.',
   'settings.project': 'Proyecto',
   'settings.projectHint':
     'Gundam Tracker es de código abierto: aportaciones e informes de error son bienvenidos.',
@@ -264,6 +267,29 @@ const es = {
   'about.trades': 'Intercambios sin intermediarios',
   'about.tradesBody':
     'Comparte listas de hasta 50 cartas mediante un enlace o un código QR generado en tu propio dispositivo.',
+  // Bienvenida
+  'landing.eyebrow': 'Gratis · Sin cuentas',
+  'landing.title': 'Tu colección de Gundam Card Game, controlada de verdad.',
+  'landing.lead':
+    'Catálogo completo, colección valorada, wishlist y listas de intercambio compartibles — todo en un solo sitio, sin registrarte y sin que tus datos salgan de tu dispositivo.',
+  'landing.enter': 'Entrar',
+  'landing.tileCatalog': 'Catálogo completo',
+  'landing.tileCatalogBody': 'Todas las expansiones del Gundam Card Game, con búsqueda instantánea.',
+  'landing.tilePrices': 'Precios por idioma',
+  'landing.tilePricesBody':
+    'Cada carta con su precio real de mercado desglosado por idioma (en/jp/zh-CN), y tu colección valorada al momento.',
+  'landing.tileWishlist': 'Wishlist',
+  'landing.tileWishlistBody': 'Crea listas de deseos y compártelas por enlace o QR con quien quieras.',
+  'landing.tileTrade': 'Listas de intercambio',
+  'landing.tileTradeBody': 'Marca lo que ofreces y comparte la lista — sin cuentas en ningún lado.',
+  'landing.honestTitle': 'La parte honesta',
+  'landing.honestBody':
+    'Es un proyecto hecho por una persona, no una empresa. No hay nada que comprar dentro de la app, ni cuentas, ni inicio de sesión.',
+  'landing.localBody': 'Tu colección, wishlist y listas de intercambio viven solo en este dispositivo.',
+
+  // Apoyo (Buy Me a Coffee)
+  'support.bmcAlt': 'Invítame a un café en Buy Me a Coffee',
+
   'about.noServer': 'Sin servidor propio',
   'about.noServerBody':
     'El catálogo y los precios se sincronizan periódicamente desde CardTrader y se publican como datos estáticos junto con el sitio.',
@@ -490,6 +516,9 @@ const en: Record<TranslationKey, string> = {
   'settings.exportImport': 'Export / import',
   'settings.exportJson': 'Export JSON',
   'settings.importJson': 'Import JSON',
+  'settings.support': 'Support the project',
+  'settings.supportHint':
+    "Gundam Tracker is free and will stay that way. If you find it useful, you can buy me a coffee — entirely optional.",
   'settings.project': 'Project',
   'settings.projectHint':
     'Gundam Tracker is open source: contributions and bug reports are welcome.',
@@ -517,6 +546,27 @@ const en: Record<TranslationKey, string> = {
   'about.trades': 'Trading without middlemen',
   'about.tradesBody':
     'Share lists of up to 50 cards with a link or a QR code generated on your own device.',
+  'landing.eyebrow': 'Free · No accounts',
+  'landing.title': 'Your Gundam Card Game collection, actually under control.',
+  'landing.lead':
+    'Full catalog, a valued collection, wishlist and shareable trade lists — all in one place, no sign-up, and none of your data ever leaves your device.',
+  'landing.enter': 'Enter',
+  'landing.tileCatalog': 'Full catalog',
+  'landing.tileCatalogBody': 'Every Gundam Card Game expansion, with instant search.',
+  'landing.tilePrices': 'Prices by language',
+  'landing.tilePricesBody':
+    'Every card with its real market price broken down by language (en/jp/zh-CN), and your collection valued on the spot.',
+  'landing.tileWishlist': 'Wishlist',
+  'landing.tileWishlistBody': 'Build wishlists and share them by link or QR with anyone.',
+  'landing.tileTrade': 'Trade lists',
+  'landing.tileTradeBody': "Mark what you're offering and share the list — no accounts on either side.",
+  'landing.honestTitle': 'The honest part',
+  'landing.honestBody':
+    "This is a one-person project, not a company. There's nothing to buy inside the app, no accounts, no login.",
+  'landing.localBody': 'Your collection, wishlist, and trade lists live only on this device.',
+
+  'support.bmcAlt': 'Buy me a coffee on Buy Me a Coffee',
+
   'about.noServer': 'No server of our own',
   'about.noServerBody':
     'The catalog and prices are synced from CardTrader periodically and published as static data alongside the site.',
@@ -746,6 +796,9 @@ const ca: Record<TranslationKey, string> = {
   'settings.exportImport': 'Exporta / importa',
   'settings.exportJson': 'Exporta JSON',
   'settings.importJson': 'Importa JSON',
+  'settings.support': 'Dona suport al projecte',
+  'settings.supportHint':
+    'Gundam Tracker és gratuït i ho continuarà sent. Si et resulta útil, em pots convidar a un cafè — totalment opcional.',
   'settings.project': 'Projecte',
   'settings.projectHint':
     'Gundam Tracker és de codi obert: les aportacions i els informes d’error són benvinguts.',
@@ -774,6 +827,27 @@ const ca: Record<TranslationKey, string> = {
   'about.trades': 'Intercanvis sense intermediaris',
   'about.tradesBody':
     'Comparteix llistes de fins a 50 cartes amb un enllaç o un codi QR generat al teu propi dispositiu.',
+  'landing.eyebrow': 'Gratuït · Sense comptes',
+  'landing.title': 'La teva col·lecció del Gundam Card Game, controlada de veritat.',
+  'landing.lead':
+    'Catàleg complet, col·lecció valorada, wishlist i llistes d’intercanvi compartibles — tot en un sol lloc, sense registrar-te i sense que les teves dades surtin del dispositiu.',
+  'landing.enter': 'Entra',
+  'landing.tileCatalog': 'Catàleg complet',
+  'landing.tileCatalogBody': 'Totes les expansions del Gundam Card Game, amb cerca instantània.',
+  'landing.tilePrices': 'Preus per idioma',
+  'landing.tilePricesBody':
+    'Cada carta amb el seu preu real de mercat desglossat per idioma (en/jp/zh-CN), i la teva col·lecció valorada a l’instant.',
+  'landing.tileWishlist': 'Wishlist',
+  'landing.tileWishlistBody': 'Crea llistes de desitjos i comparteix-les per enllaç o QR amb qui vulguis.',
+  'landing.tileTrade': 'Llistes d’intercanvi',
+  'landing.tileTradeBody': 'Marca el que ofereixes i comparteix la llista — sense comptes enlloc.',
+  'landing.honestTitle': 'La part honesta',
+  'landing.honestBody':
+    'És un projecte fet per una persona, no una empresa. No hi ha res a comprar dins l’app, ni comptes, ni inici de sessió.',
+  'landing.localBody': 'La teva col·lecció, wishlist i llistes d’intercanvi viuen només en aquest dispositiu.',
+
+  'support.bmcAlt': 'Convida’m a un cafè a Buy Me a Coffee',
+
   'about.noServer': 'Sense servidor propi',
   'about.noServerBody':
     'El catàleg i els preus se sincronitzen periòdicament des de CardTrader i es publiquen com a dades estàtiques juntament amb el lloc.',
