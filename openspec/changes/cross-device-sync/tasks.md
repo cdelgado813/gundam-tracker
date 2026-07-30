@@ -41,4 +41,4 @@
 - [x] 7.1 Crear el namespace KV real y `wrangler deploy` del Worker a `*.workers.dev` (desplegado en `gundam-tracker-sync.cdelgado813.workers.dev`, verificado PUT/GET/CORS en producción)
 - [x] 7.2 Build de producción de la webapp apuntando a la URL real del Worker desplegado (URL confirmada incrustada en el bundle)
 - [x] 7.3 Build limpio, smoke test del preview, commit y push a `main`
-- [ ] 7.4 Verificación en producción con dos dispositivos reales
+- [x] 7.4 Verificación en producción con dos dispositivos reales (simulados con dos sesiones independientes contra el sitio y el Worker reales desplegados: emparejar, sincronizar, fusionar sin duplicados — y comprobado en el propio `gundam.poordevelopers.com` que "Vincular dispositivo" genera un QR real llamando al Worker de producción)
