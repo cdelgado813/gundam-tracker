@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { db, CUSTOM_COLLECTION_COLORS } from '@/lib/db'
+import { db, customCollectionCardUuid, CUSTOM_COLLECTION_COLORS } from '@/lib/db'
 
 const conditionSchema = z.enum([
   'Mint',
@@ -166,28 +166,37 @@ export async function restoreBackup(payload: BackupPayload, mode: 'replace' | 'm
       await db.tradeLists.bulkAdd(payload.tradeLists.map((t) => ({ ...t, uuid: crypto.randomUUID() })))
 
       // Los ids de customCollections del backup son locales a ese export: se crean filas
-      // nuevas y se remapea id antiguo -> id nuevo para reconstruir customCollectionCards.
+      // nuevas y se remapea id antiguo -> id/uuid nuevos para reconstruir customCollectionCards.
       const idMap = new Map<number, number>()
+      const uuidByNewId = new Map<number, string>()
       for (const c of payload.customCollections) {
+        const uuid = crypto.randomUUID()
         const newId = (await db.customCollections.add({
-          uuid: crypto.randomUUID(),
+          uuid,
           name: c.name,
           color: c.color,
           createdAt: c.createdAt,
           updatedAt: c.updatedAt,
         })) as number
         idMap.set(c.id, newId)
+        uuidByNewId.set(newId, uuid)
       }
       const cardsToAdd = payload.customCollectionCards
+        .map((cc) => {
+          const collectionId = idMap.get(cc.collectionId)
+          const collectionUuid = collectionId != null ? uuidByNewId.get(collectionId) : undefined
+          return { collectionId, collectionUuid, cardId: cc.cardId, addedAt: cc.addedAt }
+        })
+        .filter(
+          (cc): cc is typeof cc & { collectionId: number; collectionUuid: string } =>
+            cc.collectionId != null && cc.collectionUuid != null,
+        )
         .map((cc) => ({
-          uuid: crypto.randomUUID(),
-          collectionId: idMap.get(cc.collectionId),
+          uuid: customCollectionCardUuid(cc.collectionUuid, cc.cardId),
+          collectionId: cc.collectionId,
           cardId: cc.cardId,
           addedAt: cc.addedAt,
         }))
-        .filter(
-          (cc): cc is typeof cc & { collectionId: number } => cc.collectionId != null,
-        )
       await db.customCollectionCards.bulkAdd(cardsToAdd)
     },
   )

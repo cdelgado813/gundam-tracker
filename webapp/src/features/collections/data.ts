@@ -1,4 +1,4 @@
-import { db, type CustomCollectionColor } from '@/lib/db'
+import { db, customCollectionCardUuid, type CustomCollectionColor } from '@/lib/db'
 import { tombstone } from '@/features/sync/tombstones'
 
 export async function createCustomCollection(
@@ -50,18 +50,32 @@ export async function addCardToCollection(collectionId: number, cardId: number):
     .equals([collectionId, cardId])
     .first()
   if (existing) return
-  await db.customCollectionCards.add({ uuid: crypto.randomUUID(), collectionId, cardId, addedAt: Date.now() })
+  const collection = await db.customCollections.get(collectionId)
+  if (!collection) return
+  await db.customCollectionCards.add({
+    uuid: customCollectionCardUuid(collection.uuid, cardId),
+    collectionId,
+    cardId,
+    addedAt: Date.now(),
+  })
 }
 
 /** Asigna varias cartas de golpe (selector masivo); ignora las que ya estuvieran asignadas. */
 export async function addCardsToCollection(collectionId: number, cardIds: number[]): Promise<number> {
-  return db.transaction('rw', db.customCollectionCards, async () => {
+  return db.transaction('rw', db.customCollections, db.customCollectionCards, async () => {
+    const collection = await db.customCollections.get(collectionId)
+    if (!collection) return 0
     const existing = await db.customCollectionCards.where('collectionId').equals(collectionId).toArray()
     const already = new Set(existing.map((e) => e.cardId))
     const now = Date.now()
     const toAdd = cardIds
       .filter((id) => !already.has(id))
-      .map((cardId) => ({ uuid: crypto.randomUUID(), collectionId, cardId, addedAt: now }))
+      .map((cardId) => ({
+        uuid: customCollectionCardUuid(collection.uuid, cardId),
+        collectionId,
+        cardId,
+        addedAt: now,
+      }))
     if (toAdd.length > 0) await db.customCollectionCards.bulkAdd(toAdd)
     return toAdd.length
   })
@@ -106,6 +120,13 @@ export async function toggleCardInCollection(collectionId: number, cardId: numbe
     await tombstone('customCollectionCards', existing.uuid)
     return false
   }
-  await db.customCollectionCards.add({ uuid: crypto.randomUUID(), collectionId, cardId, addedAt: Date.now() })
+  const collection = await db.customCollections.get(collectionId)
+  if (!collection) return false
+  await db.customCollectionCards.add({
+    uuid: customCollectionCardUuid(collection.uuid, cardId),
+    collectionId,
+    cardId,
+    addedAt: Date.now(),
+  })
   return true
 }

@@ -148,6 +148,16 @@ export interface CustomCollectionCard {
 }
 
 /**
+ * `uuid` determinista para una tarjeta dentro de una colección personalizada: se deriva
+ * del `uuid` de la colección (ya compartido entre dispositivos) y el id de carta, en vez
+ * de generarse al azar, para que dos dispositivos que añaden/migran "la misma" tarjeta
+ * lleguen al mismo valor sin depender de haber sincronizado antes (ver migración v7).
+ */
+export function customCollectionCardUuid(collectionUuid: string, cardId: number): string {
+  return `${collectionUuid}:${cardId}`
+}
+
+/**
  * Registro de borrado para que la sincronización no resucite algo que ya se quitó
  * en otro dispositivo (spec cross-device-sync): sin esto, `mergeTable` no puede
  * distinguir "esto es nuevo, añádelo" de "esto se borró, no lo vuelvas a añadir".
@@ -282,6 +292,43 @@ export class GundamDB extends Dexie {
           .toCollection()
           .modify((row: { uuid?: string }) => {
             row.uuid = crypto.randomUUID()
+          })
+      })
+    // v7: corrige v6 — el `uuid` aleatorio que se rellenaba ahí se generaba por
+    // dispositivo, así que la misma tarjeta ya sincronizada (emparejada antes de que
+    // esta tabla tuviera `uuid`, cuando se igualaba solo por collectionId+cardId)
+    // acababa con un `uuid` distinto en cada lado y la fusión dejaba de reconocerla
+    // como la misma fila (la duplicaba en vez de fusionarla). Aquí se recalcula de
+    // forma determinista a partir del uuid de la colección (ya compartido entre
+    // dispositivos) + el id de carta, para que ambos lados lleguen al mismo valor
+    // sin depender de haber sincronizado ya. También limpia duplicados que ese bug
+    // ya hubiera creado.
+    this.version(7)
+      .stores({})
+      .upgrade(async (tx) => {
+        const collections = await tx.table('customCollections').toArray()
+        const uuidByCollectionId = new Map(
+          (collections as { id: number; uuid: string }[]).map((c) => [c.id, c.uuid]),
+        )
+        const rows = (await tx.table('customCollectionCards').toArray()) as {
+          id: number
+          collectionId: number
+          cardId: number
+        }[]
+        const seen = new Map<string, number>()
+        const toDelete: number[] = []
+        for (const row of rows) {
+          const key = `${row.collectionId}:${row.cardId}`
+          if (seen.has(key)) toDelete.push(row.id)
+          else seen.set(key, row.id)
+        }
+        if (toDelete.length > 0) await tx.table('customCollectionCards').bulkDelete(toDelete)
+        await tx
+          .table('customCollectionCards')
+          .toCollection()
+          .modify((row: { collectionId: number; cardId: number; uuid?: string }) => {
+            const collectionUuid = uuidByCollectionId.get(row.collectionId)
+            if (collectionUuid) row.uuid = customCollectionCardUuid(collectionUuid, row.cardId)
           })
       })
   }
