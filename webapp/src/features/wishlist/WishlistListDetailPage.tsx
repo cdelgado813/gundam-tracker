@@ -2,9 +2,9 @@ import { useEffect, useMemo, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
 import QRCode from 'qrcode'
-import { ArrowLeft, Download, Link2, ListChecks, QrCode, Star, Trash2, X } from 'lucide-react'
+import { ArrowLeft, Check, Download, Link2, ListChecks, Pencil, QrCode, Star, Trash2, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
-import { removeFromWishlistList, wishlistListUnits, WISHLIST_LIST_MAX_UNITS } from './data'
+import { removeFromWishlistList, renameWishlistList, wishlistListUnits, WISHLIST_LIST_MAX_UNITS } from './data'
 import { tombstone } from '@/features/sync/tombstones'
 import { shareUrlFor, encodeWishlistList, MAX_SHARE_URL_LENGTH } from './share'
 import { useCardFilter } from '@/ui/CardListControls'
@@ -33,6 +33,8 @@ export function WishlistListDetailPage() {
   const [qr, setQr] = useState<string | null>(null)
   const [toast, setToast] = useState<string | null>(null)
   const [urlTooLong, setUrlTooLong] = useState(false)
+  const [editingName, setEditingName] = useState(false)
+  const [nameDraft, setNameDraft] = useState('')
 
   const resolved = useLiveQuery(async () => {
     if (!list) return null
@@ -131,6 +133,13 @@ export function WishlistListDetailPage() {
     URL.revokeObjectURL(a.href)
   }
 
+  const saveName = async () => {
+    if (nameDraft.trim() && nameDraft.trim() !== list.name) {
+      await renameWishlistList(listId, nameDraft.trim())
+    }
+    setEditingName(false)
+  }
+
   return (
     <div className="mx-auto max-w-3xl p-4 pb-24">
       <div className="flex items-center justify-between">
@@ -161,42 +170,71 @@ export function WishlistListDetailPage() {
       </div>
 
       <header className="mb-4 mt-1">
-        <div className="flex items-center justify-between">
-          <h1 className="font-display text-xl font-bold text-hangar-100">{list.name}</h1>
-          <span className="rounded-lg bg-hangar-800 px-2 py-1 font-display text-xs text-hangar-300">
+        <div className="flex items-center justify-between gap-2">
+          {editingName ? (
+            <input
+              autoFocus
+              value={nameDraft}
+              onChange={(e) => setNameDraft(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && saveName()}
+              onBlur={saveName}
+              className="min-w-0 flex-1 rounded-lg border border-hangar-600 bg-hangar-900 px-2 py-1 font-display text-xl font-bold text-hangar-100 focus:outline-none"
+            />
+          ) : (
+            <h1 className="truncate font-display text-xl font-bold text-hangar-100">{list.name}</h1>
+          )}
+          {list.kind === 'own' && (
+            <button
+              aria-label={t('trades.rename')}
+              onClick={() => {
+                if (editingName) {
+                  void saveName()
+                } else {
+                  setNameDraft(list.name)
+                  setEditingName(true)
+                }
+              }}
+              className="shrink-0 rounded-lg p-1.5 text-hangar-300 hover:bg-hangar-800 hover:text-hangar-100"
+            >
+              {editingName ? <Check size={16} /> : <Pencil size={16} />}
+            </button>
+          )}
+          <span className="shrink-0 rounded-lg bg-hangar-800 px-2 py-1 font-display text-xs text-hangar-300">
             {units}/{WISHLIST_LIST_MAX_UNITS}
           </span>
         </div>
-        {list.kind === 'own' && (
-          <div className="mt-3 flex flex-wrap gap-2">
-            <Button onClick={copyLink} className="gap-1.5">
-              <Link2 size={14} />
-              {t('trades.copyLink')}
-            </Button>
-            <Button variant="secondary" onClick={showQr} className="gap-1.5">
-              <QrCode size={14} />
-              {t('trades.qr')}
-            </Button>
-            <Button variant="secondary" onClick={exportFile} className="gap-1.5">
-              <Download size={14} />
-              {t('trades.exportFile')}
-            </Button>
-            <Button
-              variant="danger"
-              className="gap-1.5"
-              onClick={async () => {
-                if (window.confirm(t('trades.deleteConfirm'))) {
-                  await db.wishlistLists.delete(listId)
-                  await tombstone('wishlistLists', list.uuid)
-                  navigate('/wishlist')
-                }
-              }}
-            >
-              <Trash2 size={14} />
-              {t('common.delete')}
-            </Button>
-          </div>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {list.kind === 'own' && (
+            <>
+              <Button onClick={copyLink} className="gap-1.5">
+                <Link2 size={14} />
+                {t('trades.copyLink')}
+              </Button>
+              <Button variant="secondary" onClick={showQr} className="gap-1.5">
+                <QrCode size={14} />
+                {t('trades.qr')}
+              </Button>
+              <Button variant="secondary" onClick={exportFile} className="gap-1.5">
+                <Download size={14} />
+                {t('trades.exportFile')}
+              </Button>
+            </>
+          )}
+          <Button
+            variant="danger"
+            className="gap-1.5"
+            onClick={async () => {
+              if (window.confirm(t('trades.deleteConfirm'))) {
+                await db.wishlistLists.delete(listId)
+                await tombstone('wishlistLists', list.uuid)
+                navigate('/wishlist')
+              }
+            }}
+          >
+            <Trash2 size={14} />
+            {t('common.delete')}
+          </Button>
+        </div>
       </header>
 
       {urlTooLong && (

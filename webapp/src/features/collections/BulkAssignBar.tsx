@@ -96,11 +96,17 @@ export function BulkAssignBar({
   const [creating, setCreating] = useState(false)
   const [name, setName] = useState('')
   const [color, setColor] = useState<CustomCollectionColor>('federation')
+  const [creatingList, setCreatingList] = useState(false)
+  const [listName, setListName] = useState('')
 
   const ids = [...selectedIds]
   const n = selectedIds.size
   const none = n === 0
-  const togglePanel = (p: 'collections' | 'trades' | 'wishlists') => setPanel(panel === p ? null : p)
+  const togglePanel = (p: 'collections' | 'trades' | 'wishlists') => {
+    setPanel(panel === p ? null : p)
+    setCreatingList(false)
+    setListName('')
+  }
 
   const markOwned = async () => {
     const done = await addCardsToOwned(ids)
@@ -161,6 +167,22 @@ export function BulkAssignBar({
     await assignCollection(id)
     setName('')
     setCreating(false)
+  }
+
+  const createAndAssignWishlist = async () => {
+    if (!listName.trim()) return
+    const id = await createWishlistList(listName.trim())
+    await assignWishlistList(id)
+    setListName('')
+    setCreatingList(false)
+  }
+
+  const createAndAssignTrade = async () => {
+    if (!listName.trim()) return
+    const id = await createTradeList(listName.trim())
+    await assignTradeList(id)
+    setListName('')
+    setCreatingList(false)
   }
 
   return (
@@ -237,16 +259,30 @@ export function BulkAssignBar({
                 </button>
               )
             })}
-            <button
-              onClick={async () => {
-                const id = await createWishlistList(`Lista ${wishlistLists.length + 1}`)
-                await assignWishlistList(id)
-              }}
-              className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
-            >
-              <Plus size={14} />
-              {t('bulk.newList')}
-            </button>
+            {creatingList ? (
+              <div className="mt-1 flex flex-col gap-2 rounded-lg border border-hangar-700 p-2">
+                <input
+                  autoFocus
+                  value={listName}
+                  onChange={(e) => setListName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && createAndAssignWishlist()}
+                  placeholder={t('wishlist.namePlaceholder')}
+                  className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
+                />
+                <Button onClick={createAndAssignWishlist} className="w-full justify-center gap-1.5">
+                  <Plus size={14} />
+                  {t('bulk.newList')}
+                </Button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCreatingList(true)}
+                className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+              >
+                <Plus size={14} />
+                {t('bulk.newList')}
+              </button>
+            )}
           </div>
         )}
 
@@ -269,16 +305,30 @@ export function BulkAssignBar({
                 </button>
               )
             })}
-            <button
-              onClick={async () => {
-                const id = await createTradeList(`Lista ${tradeLists.length + 1}`)
-                await assignTradeList(id)
-              }}
-              className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
-            >
-              <Plus size={14} />
-              {t('bulk.newList')}
-            </button>
+            {creatingList ? (
+              <div className="mt-1 flex flex-col gap-2 rounded-lg border border-hangar-700 p-2">
+                <input
+                  autoFocus
+                  value={listName}
+                  onChange={(e) => setListName(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && createAndAssignTrade()}
+                  placeholder={t('trades.namePlaceholder')}
+                  className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
+                />
+                <Button onClick={createAndAssignTrade} className="w-full justify-center gap-1.5">
+                  <Plus size={14} />
+                  {t('bulk.newList')}
+                </Button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setCreatingList(true)}
+                className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+              >
+                <Plus size={14} />
+                {t('bulk.newList')}
+              </button>
+            )}
           </div>
         )}
 

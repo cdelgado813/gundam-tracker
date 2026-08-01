@@ -68,6 +68,10 @@ export async function addCardsToTradeList(
   })
 }
 
+export async function renameTradeList(listId: number, name: string): Promise<void> {
+  await db.tradeLists.update(listId, { name, updatedAt: Date.now() })
+}
+
 export async function removeFromTradeList(listId: number, cardId: number, condition?: CardCondition) {
   await db.transaction('rw', db.tradeLists, async () => {
     const list = await db.tradeLists.get(listId)

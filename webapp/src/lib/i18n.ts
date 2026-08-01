@@ -193,6 +193,7 @@ const es = {
   'trades.copyLink': 'Copiar enlace',
   'trades.qr': 'QR',
   'trades.exportFile': 'Exportar fichero',
+  'trades.rename': 'Renombrar',
   'trades.deleteConfirm': '¿Eliminar esta lista?',
   'trades.linkCopied': 'Enlace copiado',
   'trades.tooLong':
@@ -504,6 +505,7 @@ const en: Record<TranslationKey, string> = {
   'trades.copyLink': 'Copy link',
   'trades.qr': 'QR',
   'trades.exportFile': 'Export file',
+  'trades.rename': 'Rename',
   'trades.deleteConfirm': 'Delete this list?',
   'trades.linkCopied': 'Link copied',
   'trades.tooLong': 'The list is too large for a link. Use the QR code or “Export file”.',
@@ -807,6 +809,7 @@ const ca: Record<TranslationKey, string> = {
   'trades.copyLink': 'Copia l’enllaç',
   'trades.qr': 'QR',
   'trades.exportFile': 'Exporta el fitxer',
+  'trades.rename': 'Reanomena',
   'trades.deleteConfirm': 'Vols eliminar aquesta llista?',
   'trades.linkCopied': 'Enllaç copiat',
   'trades.tooLong':

@@ -137,6 +137,8 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
   const t = useT()
   const lists = useLiveQuery(() => db.tradeLists.where('kind').equals('own').toArray()) ?? []
   const [open, setOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState('')
 
   const add = async (listId: number) => {
     const added = await addToTradeList(listId, cardId, 1)
@@ -164,17 +166,45 @@ function TradeListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: str
               </span>
             </button>
           ))}
-          <button
-            onClick={async () => {
-              const name = `Lista ${lists.length + 1}`
-              const id = await createTradeList(name)
-              await add(id)
-            }}
-            className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
-          >
-            <Plus size={14} />
-            {t('card.newList')}
-          </button>
+          {creating ? (
+            <div className="mt-1 flex flex-col gap-2 rounded-lg border border-hangar-700 p-2">
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key !== 'Enter' || !name.trim()) return
+                  const id = await createTradeList(name.trim())
+                  await add(id)
+                  setName('')
+                  setCreating(false)
+                }}
+                placeholder={t('trades.namePlaceholder')}
+                className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
+              />
+              <Button
+                onClick={async () => {
+                  if (!name.trim()) return
+                  const id = await createTradeList(name.trim())
+                  await add(id)
+                  setName('')
+                  setCreating(false)
+                }}
+                className="w-full justify-center gap-1.5"
+              >
+                <Plus size={14} />
+                {t('card.newList')}
+              </Button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setCreating(true)}
+              className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+            >
+              <Plus size={14} />
+              {t('card.newList')}
+            </button>
+          )}
         </div>
       )}
     </div>
@@ -185,6 +215,8 @@ function WishlistListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: 
   const t = useT()
   const lists = useLiveQuery(() => db.wishlistLists.where('kind').equals('own').toArray()) ?? []
   const [open, setOpen] = useState(false)
+  const [creating, setCreating] = useState(false)
+  const [name, setName] = useState('')
 
   const add = async (listId: number) => {
     const added = await addToWishlistList(listId, cardId, 1)
@@ -212,17 +244,45 @@ function WishlistListPicker({ cardId, onDone }: { cardId: number; onDone: (msg: 
               </span>
             </button>
           ))}
-          <button
-            onClick={async () => {
-              const name = `Lista ${lists.length + 1}`
-              const id = await createWishlistList(name)
-              await add(id)
-            }}
-            className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
-          >
-            <Plus size={14} />
-            {t('card.newList')}
-          </button>
+          {creating ? (
+            <div className="mt-1 flex flex-col gap-2 rounded-lg border border-hangar-700 p-2">
+              <input
+                autoFocus
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={async (e) => {
+                  if (e.key !== 'Enter' || !name.trim()) return
+                  const id = await createWishlistList(name.trim())
+                  await add(id)
+                  setName('')
+                  setCreating(false)
+                }}
+                placeholder={t('wishlist.namePlaceholder')}
+                className="rounded-lg border border-hangar-700 bg-hangar-900 px-2.5 py-1.5 text-sm focus:border-federation-400 focus:outline-none"
+              />
+              <Button
+                onClick={async () => {
+                  if (!name.trim()) return
+                  const id = await createWishlistList(name.trim())
+                  await add(id)
+                  setName('')
+                  setCreating(false)
+                }}
+                className="w-full justify-center gap-1.5"
+              >
+                <Plus size={14} />
+                {t('card.newList')}
+              </Button>
+            </div>
+          ) : (
+            <button
+              onClick={() => setCreating(true)}
+              className="flex w-full items-center gap-1.5 rounded-lg px-3 py-2 text-left text-sm text-federation-400 hover:bg-hangar-700"
+            >
+              <Plus size={14} />
+              {t('card.newList')}
+            </button>
+          )}
         </div>
       )}
     </div>
