@@ -146,6 +146,10 @@ const es = {
   'bulk.addToTradeList': 'Añadir a lista de trade',
   'bulk.newCollection': 'Nueva colección',
   'bulk.newList': 'Nueva lista',
+  'bulk.confirmMarkOwnedAfterCreate':
+    'Colección creada con {n} cartas asignadas. ¿Quieres marcar también esas {n} cartas como en propiedad?',
+  'bulk.confirmMarkOwnedYes': 'Sí, marcar en propiedad',
+  'bulk.confirmMarkOwnedNo': 'No, solo asignar',
   'bulk.confirmRemoveCopy': '¿Restar una copia de {n} cartas? Las que no tengas se omiten.',
   'bulk.confirmRemoveWishlist': '¿Quitar {n} cartas de la wishlist?',
   'bulk.confirmRemoveCollection':
@@ -215,6 +219,11 @@ const es = {
   'settings.language': 'Idioma de la app',
   'settings.languageHint':
     'Solo afecta a la interfaz; el idioma de tus cartas se elige en cada copia.',
+  'settings.playsetMode': 'Modo playset',
+  'settings.playsetModeHint':
+    'Con el modo playset activo, una carta cuenta como "en propiedad" solo con 4 copias o más (un playset completo); "faltantes" incluye cualquier carta con menos de 4. No afecta a las barras de progreso ni a la valoración.',
+  'settings.playsetModeOn': 'Activado',
+  'settings.playsetModeOff': 'Desactivado',
   'settings.catalog': 'Catálogo',
   'settings.catalogHint':
     'El catálogo y los precios se publican automáticamente desde CardTrader; nadie necesita iniciar sesión para usarlos.',
@@ -461,6 +470,10 @@ const en: Record<TranslationKey, string> = {
   'bulk.addToTradeList': 'Add to trade list',
   'bulk.newCollection': 'New collection',
   'bulk.newList': 'New list',
+  'bulk.confirmMarkOwnedAfterCreate':
+    'Collection created with {n} cards assigned. Do you also want to mark those {n} cards as owned?',
+  'bulk.confirmMarkOwnedYes': 'Yes, mark as owned',
+  'bulk.confirmMarkOwnedNo': 'No, just assign',
   'bulk.confirmRemoveCopy': 'Remove one copy from {n} cards? Those you do not own are skipped.',
   'bulk.confirmRemoveWishlist': 'Remove {n} cards from the wishlist?',
   'bulk.confirmRemoveCollection': 'Remove {n} cards from this collection? Your owned copies are untouched.',
@@ -524,6 +537,11 @@ const en: Record<TranslationKey, string> = {
   'settings.title': 'SETTINGS',
   'settings.language': 'App language',
   'settings.languageHint': 'Affects the interface only; your cards’ language is set per copy.',
+  'settings.playsetMode': 'Playset mode',
+  'settings.playsetModeHint':
+    'With playset mode on, a card counts as "owned" only with 4 or more copies (a full playset); "missing" includes any card with fewer than 4. It does not affect progress bars or valuation.',
+  'settings.playsetModeOn': 'On',
+  'settings.playsetModeOff': 'Off',
   'settings.catalog': 'Catalog',
   'settings.catalogHint':
     'The catalog and prices are published automatically from CardTrader; nobody needs to sign in to use them.',
@@ -764,6 +782,10 @@ const ca: Record<TranslationKey, string> = {
   'bulk.addToTradeList': 'Afegeix a llista d’intercanvi',
   'bulk.newCollection': 'Col·lecció nova',
   'bulk.newList': 'Llista nova',
+  'bulk.confirmMarkOwnedAfterCreate':
+    'Col·lecció creada amb {n} cartes assignades. Vols marcar també aquestes {n} cartes com a en possessió?',
+  'bulk.confirmMarkOwnedYes': 'Sí, marca-les en possessió',
+  'bulk.confirmMarkOwnedNo': 'No, només assigna',
   'bulk.confirmRemoveCopy': 'Vols restar una còpia de {n} cartes? Les que no tinguis s’ometen.',
   'bulk.confirmRemoveWishlist': 'Vols treure {n} cartes de la wishlist?',
   'bulk.confirmRemoveCollection':
@@ -830,6 +852,11 @@ const ca: Record<TranslationKey, string> = {
   'settings.language': 'Idioma de l’app',
   'settings.languageHint':
     'Només afecta la interfície; l’idioma de les teves cartes es tria a cada còpia.',
+  'settings.playsetMode': 'Mode playset',
+  'settings.playsetModeHint':
+    'Amb el mode playset actiu, una carta compta com a "en possessió" només amb 4 còpies o més (un playset complet); "faltants" inclou qualsevol carta amb menys de 4. No afecta les barres de progrés ni la valoració.',
+  'settings.playsetModeOn': 'Activat',
+  'settings.playsetModeOff': 'Desactivat',
   'settings.catalog': 'Catàleg',
   'settings.catalogHint':
     'El catàleg i els preus es publiquen automàticament des de CardTrader; ningú no necessita iniciar sessió per fer-los servir.',

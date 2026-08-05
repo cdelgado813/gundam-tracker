@@ -5,12 +5,13 @@ import { Bell, CloudDownload, ListChecks, Search, X } from 'lucide-react'
 import { db, type Card } from '@/lib/db'
 import { useT } from '@/lib/useT'
 import { useCatalogSync } from './sync'
-import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
+import { isCardOwned, useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { RarityFilterChips } from './RarityFilterChips'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
 import { CardTile } from '@/ui/CardTile'
 import { Button } from '@/ui/Button'
 import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 
 function SyncBanner() {
   const t = useT()
@@ -102,6 +103,7 @@ function CardResults({
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const trades = useTradeListSet()
+  const playsetMode = usePlaysetMode((s) => s.enabled)
   const MAX_RESULTS = 300
   const allMatches =
     useLiveQuery(async () => {
@@ -131,7 +133,7 @@ function CardResults({
   const ownershipMatches =
     ownership === 'all'
       ? allMatches
-      : allMatches.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
+      : allMatches.filter((c) => (ownership === 'owned') === isCardOwned(owned.get(c.id) ?? 0, playsetMode))
   const results = ownershipMatches.slice(0, MAX_RESULTS)
 
   if (results.length === 0)

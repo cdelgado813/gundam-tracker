@@ -98,6 +98,7 @@ export function BulkAssignBar({
   const [color, setColor] = useState<CustomCollectionColor>('federation')
   const [creatingList, setCreatingList] = useState(false)
   const [listName, setListName] = useState('')
+  const [justCreatedIds, setJustCreatedIds] = useState<number[] | null>(null)
 
   const ids = [...selectedIds]
   const n = selectedIds.size
@@ -106,6 +107,7 @@ export function BulkAssignBar({
     setPanel(panel === p ? null : p)
     setCreatingList(false)
     setListName('')
+    setJustCreatedIds(null)
   }
 
   const markOwned = async () => {
@@ -164,9 +166,27 @@ export function BulkAssignBar({
   const createAndAssign = async () => {
     if (!name.trim()) return
     const id = await createCustomCollection(name.trim(), color)
-    await assignCollection(id)
+    const createdIds = [...ids]
+    const added = await addCardsToCollection(id, createdIds)
+    onDone(added > 0 ? t('bulk.resultAddedCollection', { n: added }) : t('bulk.resultAllInCollection'))
     setName('')
     setCreating(false)
+    // No se cierra el panel: se pasa al paso de confirmación de "también en propiedad"
+    // (spec custom-collections) — crear ≠ poseer, y eso no siempre queda claro.
+    setJustCreatedIds(createdIds)
+  }
+
+  const confirmMarkOwnedAfterCreate = async () => {
+    if (!justCreatedIds) return
+    const done = await addCardsToOwned(justCreatedIds)
+    onDone(t('bulk.resultAddedCopies', { n: done }))
+    setJustCreatedIds(null)
+    setPanel(null)
+  }
+
+  const dismissMarkOwnedAfterCreate = () => {
+    setJustCreatedIds(null)
+    setPanel(null)
   }
 
   const createAndAssignWishlist = async () => {
@@ -188,7 +208,28 @@ export function BulkAssignBar({
   return (
     <div className="fixed inset-x-0 bottom-16 z-40 flex justify-center px-4">
       <div className="relative w-full max-w-md rounded-2xl border border-hangar-700 bg-hangar-800 p-3 shadow-2xl">
-        {panel === 'collections' && (
+        {panel === 'collections' && justCreatedIds && (
+          <div className="absolute bottom-full left-0 mb-2 w-full rounded-xl border border-hangar-700 bg-hangar-800 p-3 shadow-xl">
+            <p className="mb-3 text-sm text-hangar-100">
+              {t('bulk.confirmMarkOwnedAfterCreate', { n: justCreatedIds.length })}
+            </p>
+            <div className="flex gap-2">
+              <Button onClick={confirmMarkOwnedAfterCreate} className="flex-1 justify-center gap-1.5">
+                <PackagePlus size={14} />
+                {t('bulk.confirmMarkOwnedYes')}
+              </Button>
+              <Button
+                variant="secondary"
+                onClick={dismissMarkOwnedAfterCreate}
+                className="flex-1 justify-center gap-1.5"
+              >
+                {t('bulk.confirmMarkOwnedNo')}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {panel === 'collections' && !justCreatedIds && (
           <div className="absolute bottom-full left-0 mb-2 max-h-64 w-full overflow-y-auto rounded-xl border border-hangar-700 bg-hangar-800 p-2 shadow-xl">
             {collections.map((c) => (
               <button

@@ -15,8 +15,9 @@ import { formatCents } from '@/features/catalog/prices'
 import { Button } from '@/ui/Button'
 import { useT } from '@/lib/useT'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
-import { useOwnedMap } from '@/features/catalog/hooks'
+import { isCardOwned, useOwnedMap } from '@/features/catalog/hooks'
 import { useListViewMode } from '@/lib/useListViewMode'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 
 type SortKey = 'name' | 'expansion' | 'price'
 
@@ -56,6 +57,7 @@ export function WishlistListDetailPage() {
   const { filtered, controls } = useCardFilter(cards)
   const filteredIds = useMemo(() => new Set(filtered.map((c) => c.id)), [filtered])
   const owned = useOwnedMap()
+  const playsetMode = usePlaysetMode((s) => s.enabled)
   const storedMode = useListViewMode((s) => s.mode)
   // La selección solo tiene checkboxes en modo lista; en cuadrícula se fuerza lista.
   const viewMode = selecting ? 'list' : storedMode
@@ -72,7 +74,7 @@ export function WishlistListDetailPage() {
     .filter((x) => x.card == null || filteredIds.has(x.card.id))
     .filter((x) => {
       if (ownership === 'all' || x.card == null) return true
-      return (ownership === 'owned') === (owned.get(x.card.id) ?? 0) > 0
+      return (ownership === 'owned') === isCardOwned(owned.get(x.card.id) ?? 0, playsetMode)
     })
     .sort((a, b) => {
       if (sort === 'name') return (a.card?.name ?? '').localeCompare(b.card?.name ?? '')

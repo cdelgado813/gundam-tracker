@@ -1,7 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useLiveQuery } from 'dexie-react-hooks'
-import { CodeXml, Folder, RotateCw, Share, Smartphone, Upload, Download as DownloadIcon } from 'lucide-react'
+import {
+  CodeXml,
+  Folder,
+  RotateCw,
+  Share,
+  Smartphone,
+  ToggleLeft,
+  ToggleRight,
+  Upload,
+  Download as DownloadIcon,
+} from 'lucide-react'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 import { db } from '@/lib/db'
 import { fetchStaticMeta, type StaticMeta } from '@/lib/staticData'
 import { useCatalogSync } from '@/features/catalog/sync'
@@ -39,6 +50,8 @@ export function SettingsPage() {
   const t = useT()
   const language = useUiLanguage((s) => s.language)
   const setLanguage = useUiLanguage((s) => s.setLanguage)
+  const playsetMode = usePlaysetMode((s) => s.enabled)
+  const setPlaysetMode = usePlaysetMode((s) => s.setEnabled)
   const sync = useCatalogSync()
   const install = useInstallPrompt()
   const backups = useLiveQuery(() => db.backups.orderBy('createdAt').reverse().toArray()) ?? []
@@ -133,6 +146,21 @@ export function SettingsPage() {
             </button>
           ))}
         </div>
+      </Section>
+
+      <Section title={t('settings.playsetMode')}>
+        <p className="mb-3 text-xs text-hangar-300">{t('settings.playsetModeHint')}</p>
+        <button
+          onClick={() => void setPlaysetMode(!playsetMode)}
+          className={`inline-flex items-center gap-2 rounded-xl border px-3 py-2 text-sm font-medium transition ${
+            playsetMode
+              ? 'border-federation-500/50 bg-federation-500/15 text-federation-400'
+              : 'border-hangar-700 text-hangar-300 hover:border-hangar-600'
+          }`}
+        >
+          {playsetMode ? <ToggleRight size={16} /> : <ToggleLeft size={16} />}
+          {playsetMode ? t('settings.playsetModeOn') : t('settings.playsetModeOff')}
+        </button>
       </Section>
 
       <Section title={t('settings.catalog')}>

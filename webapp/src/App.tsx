@@ -4,6 +4,7 @@ import { LayoutGrid, Package, Repeat, Settings, Star } from 'lucide-react'
 import { useT, useSyncHtmlLang, useUiLanguage } from '@/lib/useT'
 import { useScrollRestoration, clearRememberedScroll } from '@/lib/useScrollRestoration'
 import { useListViewMode } from '@/lib/useListViewMode'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 import { useWelcomeSeen } from '@/lib/useWelcomeSeen'
 import { ScrollEdgeButtons } from '@/ui/ScrollEdgeButtons'
 import { LandingPage } from '@/features/landing/LandingPage'
@@ -105,6 +106,7 @@ function Shell() {
 function App() {
   const initLanguage = useUiLanguage((s) => s.init)
   const initListViewMode = useListViewMode((s) => s.init)
+  const initPlaysetMode = usePlaysetMode((s) => s.init)
   const initWelcomeSeen = useWelcomeSeen((s) => s.init)
   const welcomeSeen = useWelcomeSeen((s) => s.seen)
   const initDeviceSync = useDeviceSync((s) => s.init)
@@ -113,9 +115,10 @@ function App() {
   useEffect(() => {
     void initLanguage()
     void initListViewMode()
+    void initPlaysetMode()
     void initWelcomeSeen()
     void initDeviceSync()
-  }, [initLanguage, initListViewMode, initWelcomeSeen, initDeviceSync])
+  }, [initLanguage, initListViewMode, initPlaysetMode, initWelcomeSeen, initDeviceSync])
 
   // Mientras se carga la preferencia no se pinta nada (evita parpadeo bienvenida→app);
   // el hash de la URL (p. ej. un enlace compartido) no se pierde: HashRouter aún no

@@ -7,8 +7,9 @@ import { useT } from '@/lib/useT'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
 import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
-import { useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
+import { isCardOwned, useOwnedMap, useTradeListSet, useWishlistSet } from './hooks'
 import { BulkAssignBar } from '@/features/collections/BulkAssignBar'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 
 export function ExpansionPage() {
   const t = useT()
@@ -31,6 +32,7 @@ export function ExpansionPage() {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const trades = useTradeListSet()
+  const playsetMode = usePlaysetMode((s) => s.enabled)
   const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
@@ -42,7 +44,9 @@ export function ExpansionPage() {
   const visible =
     ownership === 'all'
       ? filtered
-      : filtered.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
+      : filtered.filter((c) => (ownership === 'owned') === isCardOwned(owned.get(c.id) ?? 0, playsetMode))
+  // Progreso de expansión: siempre ≥1 copia, independiente del modo playset (design.md
+  // de `playset-tracking` — el modo solo redefine el filtro de tres estados).
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
 

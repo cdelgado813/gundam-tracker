@@ -6,11 +6,12 @@ import { db } from '@/lib/db'
 import { CardTile } from '@/ui/CardTile'
 import { useCardFilter } from '@/ui/CardListControls'
 import { OwnershipFilter, type OwnershipFilterValue } from '@/ui/OwnershipFilter'
-import { useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
+import { isCardOwned, useOwnedMap, useTradeListSet, useWishlistSet } from '@/features/catalog/hooks'
 import { deleteCustomCollection } from './data'
 import { collectionColorClasses } from './colors'
 import { useT } from '@/lib/useT'
 import { BulkAssignBar } from './BulkAssignBar'
+import { usePlaysetMode } from '@/lib/usePlaysetMode'
 
 /**
  * Una colección personalizada es, para el usuario, una colección propia: lo que importa
@@ -35,6 +36,7 @@ export function CustomCollectionDetailPage() {
   const owned = useOwnedMap()
   const wishlist = useWishlistSet()
   const trades = useTradeListSet()
+  const playsetMode = usePlaysetMode((s) => s.enabled)
   const { filtered, controls } = useCardFilter(cards)
 
   useEffect(() => {
@@ -45,12 +47,14 @@ export function CustomCollectionDetailPage() {
 
   if (!collection) return null
 
+  // Progreso de la colección: siempre ≥1 copia, independiente del modo playset
+  // (design.md de `playset-tracking` — el modo solo redefine el filtro de tres estados).
   const ownedUniques = cards.filter((c) => (owned.get(c.id) ?? 0) > 0).length
   const pct = cards.length ? Math.round((ownedUniques / cards.length) * 100) : 0
   const visible =
     ownership === 'all'
       ? filtered
-      : filtered.filter((c) => (ownership === 'owned') === (owned.get(c.id) ?? 0) > 0)
+      : filtered.filter((c) => (ownership === 'owned') === isCardOwned(owned.get(c.id) ?? 0, playsetMode))
   const colors = collectionColorClasses[collection.color]
 
   const toggleSelect = (cardId: number) => {
