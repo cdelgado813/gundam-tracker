@@ -3,14 +3,10 @@ import {
   ArrowLeft,
   ArrowRight,
   CodeXml,
-  Coins,
   ExternalLink,
   HandHeart,
   HardDrive,
-  Layers,
   Lock,
-  Repeat,
-  Star,
 } from 'lucide-react'
 import { Button } from '@/ui/Button'
 import { DonateButton } from '@/ui/DonateButton'
@@ -20,31 +16,24 @@ import { useWelcomeSeen } from '@/lib/useWelcomeSeen'
 
 const REPO_URL = 'https://github.com/cdelgado813/gundam-tracker'
 const POORDEVELOPERS_URL = 'https://poordevelopers.com'
+const OPTCG_URL = 'https://optcg-collector.poordevelopers.com'
 
-const tiles: { Icon: typeof Layers; titleKey: TranslationKey; bodyKey: TranslationKey; accent: string }[] = [
+const tiles: { titleKey: TranslationKey; bodyKey: TranslationKey }[] = [
   {
-    Icon: Layers,
     titleKey: 'landing.tileCatalog',
     bodyKey: 'landing.tileCatalogBody',
-    accent: 'text-federation-400',
   },
   {
-    Icon: Coins,
     titleKey: 'landing.tilePrices',
     bodyKey: 'landing.tilePricesBody',
-    accent: 'text-haro-400',
   },
   {
-    Icon: Star,
     titleKey: 'landing.tileWishlist',
     bodyKey: 'landing.tileWishlistBody',
-    accent: 'text-haro-400',
   },
   {
-    Icon: Repeat,
     titleKey: 'landing.tileTrade',
     bodyKey: 'landing.tileTradeBody',
-    accent: 'text-newtype-400',
   },
 ]
 
@@ -82,81 +71,101 @@ export function WelcomeContent({ variant }: { variant: 'welcome' | 'about' }) {
       </header>
 
       <main>
-        <section className="mx-auto grid max-w-5xl gap-10 px-4 pb-12 pt-10 sm:grid-cols-2 sm:items-center sm:pt-16">
-          <div>
-            <p className="font-display text-xs font-bold uppercase tracking-widest text-zeon-400">
-              {t('landing.eyebrow')}
-            </p>
-            <h1 className="mt-3 font-display text-3xl font-bold leading-tight tracking-wide text-hangar-100 sm:text-4xl">
-              {t('landing.title')}
-            </h1>
-            <p className="mt-4 max-w-md text-sm leading-relaxed text-hangar-300">{t('landing.lead')}</p>
-            {!isAbout && (
-              <div className="mt-6 flex flex-wrap items-center gap-3">
-                <Button onClick={() => void markSeen()} className="gap-2">
-                  {t('landing.enter')}
-                  <ArrowRight size={16} />
-                </Button>
-              </div>
-            )}
-          </div>
+        <section className="bg-zeon-500 text-white">
+          <div className="mx-auto grid max-w-5xl gap-10 px-4 py-14 sm:grid-cols-[1.2fr_0.8fr] sm:items-center sm:py-24">
+            <div>
+              <h1 className="font-display text-4xl font-bold leading-[1.02] tracking-tight sm:text-6xl">
+                {t('landing.title')}
+              </h1>
+              <p className="mt-5 max-w-md text-lg font-medium leading-relaxed">{t('landing.lead')}</p>
+              {!isAbout && (
+                <div className="mt-8 flex flex-wrap items-center gap-3">
+                  <button
+                    onClick={() => void markSeen()}
+                    className="inline-flex items-center gap-2 rounded-full bg-white px-7 py-3.5 font-display text-lg font-bold text-hangar-950 transition hover:bg-hangar-100 active:scale-[.98]"
+                  >
+                    {t('landing.enter')}
+                    <ArrowRight size={18} />
+                  </button>
+                </div>
+              )}
+              <p className="mt-4 text-base font-semibold">{t('landing.eyebrow')}</p>
+            </div>
 
-          <div aria-hidden className="relative mx-auto h-56 w-full max-w-sm sm:h-72">
-            <img
-              src="/landing/card-amuro-ray.webp"
-              alt=""
-              className="absolute left-0 top-8 h-48 w-32 -rotate-[14deg] rounded-lg border border-hangar-700 object-cover shadow-2xl sm:h-64 sm:w-44"
-            />
-            <img
-              src="/landing/card-heero-yuy.webp"
-              alt=""
-              className="absolute right-0 top-2 h-48 w-32 rotate-[10deg] rounded-lg border border-hangar-700 object-cover shadow-2xl sm:h-64 sm:w-44"
-            />
-            <img
-              src="/landing/card-marida-cruz.webp"
-              alt=""
-              className="absolute left-1/2 top-0 h-48 w-32 -translate-x-1/2 -rotate-[2deg] rounded-lg border border-hangar-700 object-cover shadow-2xl sm:h-64 sm:w-44"
-            />
+            <div aria-hidden className="relative mx-auto h-64 w-full max-w-sm sm:h-80">
+              <img
+                src="/landing/card-amuro-ray.webp"
+                alt=""
+                className="absolute left-0 top-10 h-52 w-36 -rotate-[14deg] rounded-lg object-cover sm:h-72 sm:w-48"
+              />
+              <img
+                src="/landing/card-heero-yuy.webp"
+                alt=""
+                className="absolute right-0 top-4 h-52 w-36 rotate-[10deg] rounded-lg object-cover sm:h-72 sm:w-48"
+              />
+              <img
+                src="/landing/card-marida-cruz.webp"
+                alt=""
+                className="absolute left-1/2 top-0 h-52 w-36 -translate-x-1/2 -rotate-[2deg] rounded-lg object-cover sm:h-72 sm:w-48"
+              />
+            </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 pb-12">
-          <div className="grid gap-3 sm:grid-cols-2">
-            {tiles.map(({ Icon, titleKey, bodyKey, accent }) => (
-              <div key={titleKey} className="rounded-xl border border-hangar-800 bg-hangar-900 p-5">
-                <Icon size={20} className={accent} strokeWidth={1.75} />
-                <h2 className="mt-3 font-display text-sm font-bold text-hangar-100">{t(titleKey)}</h2>
-                <p className="mt-1.5 text-xs leading-relaxed text-hangar-300">{t(bodyKey)}</p>
+        <section className="mx-auto max-w-5xl px-4 py-14 sm:py-20">
+          <div className="grid gap-x-12 gap-y-10 sm:grid-cols-2">
+            {tiles.map(({ titleKey, bodyKey }) => (
+              <div key={titleKey}>
+                <h2 className="font-display text-2xl font-bold tracking-tight text-hangar-100 sm:text-3xl">
+                  {t(titleKey)}
+                </h2>
+                <p className="mt-2 max-w-sm text-base leading-relaxed text-hangar-300">{t(bodyKey)}</p>
               </div>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto max-w-5xl px-4 pb-12">
-          <div className="rounded-xl border border-hangar-700 border-l-4 border-l-zeon-500 bg-hangar-900 p-6">
+        <section className="bg-hangar-900">
+          <div className="mx-auto max-w-5xl px-4 py-12 sm:py-16">
             <div className="flex items-start gap-3">
-              <Lock size={18} className="mt-0.5 shrink-0 text-hangar-300" strokeWidth={1.75} />
+              <Lock size={20} className="mt-1 shrink-0 text-zeon-400" strokeWidth={1.75} />
               <div>
-                <h2 className="font-display text-sm font-bold uppercase tracking-widest text-hangar-300">
+                <h2 className="font-display text-2xl font-bold text-hangar-100 sm:text-3xl">
                   {t('landing.honestTitle')}
                 </h2>
-                <p className="mt-2 text-sm leading-relaxed text-hangar-300">{t('landing.honestBody')}</p>
+                <p className="mt-3 max-w-2xl text-base leading-relaxed text-hangar-300">{t('landing.honestBody')}</p>
               </div>
             </div>
-            <div className="mt-4 flex items-start gap-3">
-              <HardDrive size={18} className="mt-0.5 shrink-0 text-hangar-300" strokeWidth={1.75} />
-              <p className="text-sm leading-relaxed text-hangar-300">{t('landing.localBody')}</p>
+            <div className="mt-5 flex items-start gap-3">
+              <HardDrive size={20} className="mt-1 shrink-0 text-zeon-400" strokeWidth={1.75} />
+              <p className="max-w-2xl text-base leading-relaxed text-hangar-300">{t('landing.localBody')}</p>
             </div>
-          </div>
 
-          {!isAbout && (
-            <div className="mt-8 flex justify-center">
-              <Button onClick={() => void markSeen()} className="gap-2">
-                {t('landing.enter')}
-                <ArrowRight size={16} />
-              </Button>
-            </div>
-          )}
+            {!isAbout && (
+              <div className="mt-10">
+                <Button onClick={() => void markSeen()} className="gap-2 !px-7 !py-3.5 !text-lg">
+                  {t('landing.enter')}
+                  <ArrowRight size={18} />
+                </Button>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <section className="mx-auto max-w-5xl px-4 py-12">
+          <h2 className="font-display text-xl font-bold text-hangar-100">{t('landing.moreApps')}</h2>
+          <ul className="mt-3 flex flex-wrap gap-x-8 gap-y-2 text-base font-semibold">
+            <li>
+              <a href={OPTCG_URL} target="_blank" rel="noreferrer" className="text-federation-400 underline">
+                One Piece TCG Collector
+              </a>
+            </li>
+            <li>
+              <a href={POORDEVELOPERS_URL} target="_blank" rel="noreferrer" className="text-federation-400 underline">
+                poordevelopers.com
+              </a>
+            </li>
+          </ul>
         </section>
 
         {isAbout && (

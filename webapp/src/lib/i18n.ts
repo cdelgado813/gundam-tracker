@@ -302,6 +302,7 @@ const es = {
   'landing.honestBody':
     'Es un proyecto hecho por una persona, no una empresa. No hay nada que comprar dentro de la app, ni cuentas, ni inicio de sesión.',
   'landing.localBody': 'Tu colección, wishlist y listas de intercambio viven solo en este dispositivo.',
+  'landing.moreApps': 'Más de Poor Developers',
 
   // Apoyo (Buy Me a Coffee)
   'support.bmcAlt': 'Invítame a un café en Buy Me a Coffee',
@@ -617,6 +618,7 @@ const en: Record<TranslationKey, string> = {
   'landing.honestBody':
     "This is a one-person project, not a company. There's nothing to buy inside the app, no accounts, no login.",
   'landing.localBody': 'Your collection, wishlist, and trade lists live only on this device.',
+  'landing.moreApps': 'More from Poor Developers',
 
   'support.bmcAlt': 'Buy me a coffee on Buy Me a Coffee',
 
@@ -933,6 +935,7 @@ const ca: Record<TranslationKey, string> = {
   'landing.honestBody':
     'És un projecte fet per una persona, no una empresa. No hi ha res a comprar dins l’app, ni comptes, ni inici de sessió.',
   'landing.localBody': 'La teva col·lecció, wishlist i llistes d’intercanvi viuen només en aquest dispositiu.',
+  'landing.moreApps': 'Més de Poor Developers',
 
   'support.bmcAlt': 'Convida’m a un cafè a Buy Me a Coffee',
 
