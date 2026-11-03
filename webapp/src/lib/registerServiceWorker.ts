@@ -15,6 +15,10 @@ const UPDATE_CHECK_INTERVAL_MS = 30 * 60 * 1000
 export function registerServiceWorker(): void {
   if (!('serviceWorker' in navigator)) return
 
+  // Caché de imágenes anterior (stale-while-revalidate): pudo guardar respuestas de
+  // error de CardTrader como si fueran imágenes. Se borra una vez; la nueva es v2.
+  void caches?.delete('card-images')
+
   const updateSW = registerSW({
     immediate: true,
     onRegisteredSW(_url, registration) {

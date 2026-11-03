@@ -33,12 +33,19 @@ export default defineConfig({
         navigateFallback: 'index.html',
         runtimeCaching: [
           {
-            // imágenes de cartas de CardTrader: stale-while-revalidate (design D2)
+            // Imágenes de cartas de CardTrader. Al ser cross-origin sin CORS, las
+            // respuestas son opacas (status 0) para CUALQUIER código HTTP, así que no
+            // se puede distinguir un 200 de un 403/429/5xx. Con stale-while-revalidate
+            // un error puntual de CardTrader quedaba cacheado y se servía como imagen
+            // rota o placeholder. NetworkFirst vuelve a pedir siempre la imagen y solo
+            // usa la caché si no hay red (offline) o tarda más de 4 s.
             urlPattern: /^https:\/\/(www\.)?cardtrader\.com\/.*\.(jpg|jpeg|png|webp)/,
-            handler: 'StaleWhileRevalidate',
+            handler: 'NetworkFirst',
             options: {
-              cacheName: 'card-images',
-              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 90 },
+              // v2: descarta las copias envenenadas que dejó la caché anterior.
+              cacheName: 'card-images-v2',
+              networkTimeoutSeconds: 4,
+              expiration: { maxEntries: 3000, maxAgeSeconds: 60 * 60 * 24 * 30 },
               cacheableResponse: { statuses: [0, 200] },
             },
           },
